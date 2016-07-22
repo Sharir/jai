@@ -1,0 +1,42 @@
+{
+	"folders":
+	[
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"default_line_endings": "unix",
+
+		"sublimegdb_commandline": "gdb --interpreter=mi bin/jai",
+    "sublimegdb_workingdir": "${folder:${project_path:.}}",
+    "sublimegdb_exec_cmd": "run test/hello.jai"
+	},
+	"build_systems":
+	[
+		{
+			"name": "Jai",
+			"cmd": ["bash", "-c", "./build.sh -b"],
+			"working_dir": "${project_path}",
+			"windows": {
+				"path": "c:\\cygwin64\\bin;"
+			},
+
+			"variants":
+			[
+				{
+					"name": "Debug",
+					"cmd": ["bash", "-c", "./build.sh -bd"]
+				},
+				{
+					"name": "Run Last",
+					"cmd": ["bash", "-c", "./build.sh -r"]
+				},
+				{
+					"name": "Build & Run",
+					"cmd": ["bash", "-c", "./build.sh -br"]
+				}
+			]
+		}
+	]
+}
