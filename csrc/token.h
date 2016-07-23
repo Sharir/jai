@@ -52,8 +52,8 @@ enum TokenType {
 	OP_BIN_LOGICAL_OR,				// _ || _
 	OP_BIN_EQUALS,					// _ == _
 	OP_BIN_NOT_EQUALS,				// _ != _
-	OP_BIN_GREATOR,					// _ > _
-	OP_BIN_GREATOR_EQUAL,			// _ >= _
+	OP_BIN_GREATER,					// _ > _
+	OP_BIN_GREATER_EQUAL,			// _ >= _
 	OP_BIN_LESS_THAN,				// _ < _
 	OP_BIN_LESS_EQUAL,				// _ >= _
 
