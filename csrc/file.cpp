@@ -7,18 +7,24 @@ string readFile(string name) {
 	FILE* f;
 	char* str;
 	int size;
+	int c;
 
 	f = fopen(name.c_str(), "r");
 	if (!f) return NULL;
 
 	fseek(f, 0, SEEK_END);
 	size = ftell(f);
-	rewind(f);
+	//rewind(f);
+	fseek(f, 0, SEEK_SET);
 
-	str = (char*)malloc(size + 1);
-	fread(str, 1, size, f);
-	str[size] = '\0';
-
+	str = new char[size + 1];
+	//fgets(str, size, f);
+	//fread(str, 1, size, f);
+	//str[size] = '\0';
+	int i = 0;
+	while((c = fgetc(f)) != EOF)
+		*(str + i++) = (char)c;
+	*(str + i) = '\0';
 	fclose(f);
 	string ret(str);
 	free(str);

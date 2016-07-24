@@ -8,6 +8,11 @@
 using namespace std;
 
 void printToken(const Token& t) {
+	if(t.lexeme == "\n")
+	{
+		printf("Token { type: %d\tlexeme: '\\n' }\n", t.type, t.lexeme.c_str());
+		return;
+	}
 	printf("Token { type: %d\tlexeme: '%s' }\n", t.type, t.lexeme.c_str());
 }
 
@@ -54,6 +59,6 @@ int main(int argc, char** argv) {
 	for (const Token& t : tokens) {
 		printToken(t);
 	}
-
+	
 	return 0;
 }

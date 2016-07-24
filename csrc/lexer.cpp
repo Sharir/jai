@@ -24,7 +24,10 @@ void tokenize(string data, vector<Token>& tokens) {
 			runningType = WHITESPACE;
 			continue;
 		} else if (runningType == WHITESPACE) {
-			tokens.push_back((Token){ WHITESPACE, data.substr(tokenStart, lexIndex - tokenStart) });
+			Token next;
+			next.type = WHITESPACE;
+			next.lexeme = data.substr(tokenStart, lexIndex - tokenStart);
+			tokens.push_back(next);
 			tokenStart = lexIndex;
 			runningType = UNKNOWN;
 		}
@@ -35,7 +38,10 @@ void tokenize(string data, vector<Token>& tokens) {
 				runningType = LITERAL_STRING;
 				continue;
 			} else {
-				tokens.push_back((Token){ LITERAL_STRING, data.substr(tokenStart, lexIndex - tokenStart + 1) });
+				Token next;
+				next.type = LITERAL_STRING;
+				next.lexeme = data.substr(tokenStart, lexIndex - tokenStart + 1);
+				tokens.push_back(next);
 				tokenStart = lexIndex + 1;
 				runningType = UNKNOWN;
 				continue;
