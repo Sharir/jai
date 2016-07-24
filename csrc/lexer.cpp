@@ -2,11 +2,9 @@
 #include <string>
 #include "lexer.h"
 #include "token.h"
+#include "utils.h"
 
 using namespace std;
-
-bool isNewline(char);
-bool isWhitespace(char);
 
 void tokenize(string data, vector<Token>& tokens) {
 	int lexIndex = 0;
@@ -56,12 +54,4 @@ void tokenize(string data, vector<Token>& tokens) {
 			tokenStart = lexIndex + 1;
 		}
 	}
-}
-
-bool isNewline(char c) {
-	return c == '\n' || c =='\r';
-}
-
-bool isWhitespace(char c) {
-	return c == ' ' || c == '\t' || c == '\n' || c == '\r';
 }
