@@ -3,16 +3,7 @@
 
 #include <vector>
 #include <string>
-
-enum TokenType {
-	UNKNOWN = 0,
-	WHITESPACE = 1
-};
-
-typedef struct {
-	TokenType type;
-	std::string lexeme;
-} Token;
+#include "token.h"
 
 void tokenize(std::string, std::vector<Token>&);
 
