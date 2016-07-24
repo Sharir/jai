@@ -8,14 +8,6 @@
 using namespace std;
 
 void printToken(const Token& t) {
-<<<<<<< Updated upstream
-	if(t.lexeme == "\n")
-	{
-		printf("Token { type: %d\tlexeme: '\\n' }\n", t.type, t.lexeme.c_str());
-		return;
-	}
-	printf("Token { type: %d\tlexeme: '%s' }\n", t.type, t.lexeme.c_str());
-=======
 	printf("Token { type: %d\tlexeme: '", t.type);
 	string s(t.lexeme);
 	for(std::string::iterator it = s.begin() ; it != s.end() ; it++)
@@ -35,8 +27,6 @@ void printToken(const Token& t) {
 	}
 	
 	printf("' }\n");
-	//	%s' }\n", t.type, t.lexeme.replace(t.lexeme.begin(), t.lexeme.end(), "\n" "\\n").c_str());
->>>>>>> Stashed changes
 }
 
 int main(int argc, char** argv) {
