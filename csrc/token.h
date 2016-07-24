@@ -30,7 +30,7 @@ enum TokenType {
 	COMMA                       = 19,	// ,
 	SEMI_COLON                  = 20,	// ;
 	DOUBLE_COLON                = 21,	// ::
-	IDENTIFIER                  = 22,	// var/const/func name
+	IDENTIFIER                  = 22,	// var/const/func/type name
 
 
 	OP_DECLERATION              = 23,	// name: type

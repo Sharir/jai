@@ -2,6 +2,7 @@
 #define _LEXER_H
 
 #include <vector>
+#include <string>
 #include "token.h"
 
 void tokenize(std::string, std::vector<Token>&);

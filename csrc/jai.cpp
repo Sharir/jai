@@ -2,9 +2,14 @@
 #include <string>
 #include <vector>
 #include "file.h"
+#include "lexer.h"
 #include "os.h"
 
 using namespace std;
+
+void printToken(const Token& t) {
+	printf("Token { type: %d\tlexeme: '%s' }\n", t.type, t.lexeme.c_str());
+}
 
 int main(int argc, char** argv) {
 	string* p_mainFileName = NULL;
@@ -42,7 +47,13 @@ int main(int argc, char** argv) {
 	outFileName += ".exe";
 #endif
 
-	printf("in: %s\tout: %s\n", mainFileName.c_str(), outFileName.c_str());
+	string data = readFile(mainFileName);
+	vector<Token> tokens;
+	tokenize(data, tokens);
+
+	for (const Token& t : tokens) {
+		printToken(t);
+	}
 
 	return 0;
 }
