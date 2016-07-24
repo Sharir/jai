@@ -8,6 +8,7 @@ string readFile(string name) {
 	char* str;
 	int size;
 	int i = 0;
+	int c;
 
 	f = fopen(name.c_str(), "r");
 	if (!f) return NULL;
@@ -31,7 +32,6 @@ string readFile(string name) {
 }
 
 bool writeFile(string name, string data) {
-	cout << name << "\n";
 	FILE* f;
 
 	f = fopen(name.c_str(), "w");

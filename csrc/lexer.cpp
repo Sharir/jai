@@ -2,11 +2,11 @@
 #include <string>
 #include "lexer.h"
 #include "token.h"
+#include "utils.h"
 
 using namespace std;
 
-bool isNewline(char);
-bool isWhitespace(char);
+Token makeToken(TokenType, string);
 
 void tokenize(string data, vector<Token>& tokens) {
 	int lexIndex = 0;
@@ -24,10 +24,7 @@ void tokenize(string data, vector<Token>& tokens) {
 			runningType = WHITESPACE;
 			continue;
 		} else if (runningType == WHITESPACE) {
-			Token next;
-			next.type = WHITESPACE;
-			next.lexeme = data.substr(tokenStart, lexIndex - tokenStart);
-			tokens.push_back(next);
+			tokens.push_back(makeToken(WHITESPACE, data.substr(tokenStart, lexIndex - tokenStart)));
 			tokenStart = lexIndex;
 			runningType = UNKNOWN;
 		}
@@ -38,10 +35,7 @@ void tokenize(string data, vector<Token>& tokens) {
 				runningType = LITERAL_STRING;
 				continue;
 			} else {
-				Token next;
-				next.type = LITERAL_STRING;
-				next.lexeme = data.substr(tokenStart, lexIndex - tokenStart + 1);
-				tokens.push_back(next);
+				tokens.push_back(makeToken(LITERAL_STRING, data.substr(tokenStart, lexIndex - tokenStart + 1)));
 				tokenStart = lexIndex + 1;
 				runningType = UNKNOWN;
 				continue;
@@ -64,10 +58,9 @@ void tokenize(string data, vector<Token>& tokens) {
 	}
 }
 
-bool isNewline(char c) {
-	return c == '\n' || c =='\r';
-}
-
-bool isWhitespace(char c) {
-	return c == ' ' || c == '\t' || c == '\n' || c == '\r';
+Token makeToken(TokenType t, string s) {
+	Token token;
+	token.type = t;
+	token.lexeme = s;
+	return token;
 }

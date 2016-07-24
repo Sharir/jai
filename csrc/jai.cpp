@@ -25,7 +25,7 @@ void printToken(const Token& t) {
 		else
 			putchar(it[0]);
 	}
-	
+
 	printf("' }\n");
 }
 
@@ -72,6 +72,6 @@ int main(int argc, char** argv) {
 	for (const Token& t : tokens) {
 		printToken(t);
 	}
-	
+
 	return 0;
 }
