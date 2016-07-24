@@ -6,6 +6,8 @@
 
 using namespace std;
 
+Token makeToken(TokenType, string);
+
 void tokenize(string data, vector<Token>& tokens) {
 	int lexIndex = 0;
 	int length = data.length();
@@ -22,7 +24,7 @@ void tokenize(string data, vector<Token>& tokens) {
 			runningType = WHITESPACE;
 			continue;
 		} else if (runningType == WHITESPACE) {
-			tokens.push_back((Token){ WHITESPACE, data.substr(tokenStart, lexIndex - tokenStart) });
+			tokens.push_back(makeToken(WHITESPACE, data.substr(tokenStart, lexIndex - tokenStart)));
 			tokenStart = lexIndex;
 			runningType = UNKNOWN;
 		}
@@ -33,7 +35,7 @@ void tokenize(string data, vector<Token>& tokens) {
 				runningType = LITERAL_STRING;
 				continue;
 			} else {
-				tokens.push_back((Token){ LITERAL_STRING, data.substr(tokenStart, lexIndex - tokenStart + 1) });
+				tokens.push_back(makeToken(LITERAL_STRING, data.substr(tokenStart, lexIndex - tokenStart + 1)));
 				tokenStart = lexIndex + 1;
 				runningType = UNKNOWN;
 				continue;
@@ -54,4 +56,11 @@ void tokenize(string data, vector<Token>& tokens) {
 			tokenStart = lexIndex + 1;
 		}
 	}
+}
+
+Token makeToken(TokenType t, string s) {
+	Token token;
+	token.type = t;
+	token.lexeme = s;
+	return token;
 }
