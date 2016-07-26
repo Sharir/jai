@@ -1,6 +1,8 @@
 #ifndef _PARSER_H
 #define _PARSER_H
 
+#define IS_FLAG_SET(a, b) ((a | b) == a)
+
 #include "token.h"
 #include <list>
 #include <vector>
@@ -14,6 +16,7 @@ typedef struct TreeNode {
 	TreeNode(Token d) : data(d) {}
 }TreeNode;
 
+int most_significant_bit_set(int num);
 TreeNode* parseTokens(const vector<Token>& tokens);
 
 #endif
