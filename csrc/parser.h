@@ -1,11 +1,12 @@
 #ifndef _PARSER_H
 #define _PARSER_H
 
-#define IS_FLAG_SET(a, b) ((a | b) == a)
+#define IS_FLAG_SET(a, b) ((a & b) != 0)
 
-#include "token.h"
 #include <list>
 #include <vector>
+
+#include "token.h"
 
 using namespace std;
 

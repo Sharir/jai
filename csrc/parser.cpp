@@ -4,27 +4,28 @@ int most_significant_bit_set(int num)
 {
 	int n = 1 << 30;
 
-	while((num | n) != num)
+	while((num & n) != 0)
 		n = n >> 1;
 	
 	return n;
 }
 
-TreeNode* parseTokens(const vector<Token>& tokens)
+int parseTokens(const vector<Token>& tokens, TreeNode* tree)
 {
 	int msb = 0;
 	int type = 0;
+	int size = tokens.size();
 
-	for(unsigned int i = 0 ; i < tokens.size() ; i++)
+	for (unsigned int i = 0 ; i < size ; i++)
 	{
 		type = tokens[i].type;
 		msb = most_significant_bit_set(type);
-		switch(msb)
+		switch (msb)
 		{
 		case TokenFlag::FLAG_OP:
-			if(IS_FLAG_SET(type, FLAG_OP_UNI)) //Unirary operator
+			if (IS_FLAG_SET(type, FLAG_OP_UNI)) //Unirary operator
 			{
-				switch(type)
+				switch (type)
 				{
 				case OP_UNI_INCREMENT:
 					break;
@@ -36,9 +37,9 @@ TreeNode* parseTokens(const vector<Token>& tokens)
 					break;
 				}
 			}
-			else if(IS_FLAG_SET(type, FLAG_OP_BIN)) //Binary operator
+			else if (IS_FLAG_SET(type, FLAG_OP_BIN)) //Binary operator
 			{
-				switch(type)
+				switch (type)
 				{
 				//Simple arithmetic binary operators
 				case OP_BIN_ADD:
@@ -85,9 +86,9 @@ TreeNode* parseTokens(const vector<Token>& tokens)
 					break;
 				}
 			}
-			else if(IS_FLAG_SET(type, FLAG_OP_TERNARY))
+			else if (IS_FLAG_SET(type, FLAG_OP_TERNARY))
 			{
-				switch(type)
+				switch (type)
 				{
 				case OP_TERNARY_QUESTION:
 					break;
@@ -97,7 +98,7 @@ TreeNode* parseTokens(const vector<Token>& tokens)
 			}
 			else
 			{
-				switch(type)
+				switch (type)
 				{
 				case OP_DECLARATION:
 					break;
@@ -116,7 +117,7 @@ TreeNode* parseTokens(const vector<Token>& tokens)
 			break;
 
 		case TokenFlag::FLAG_KW:
-			switch(type)
+			switch (type)
 			{
 			case KW_BREAK:
 				break;
@@ -164,7 +165,7 @@ TreeNode* parseTokens(const vector<Token>& tokens)
 			break;
 
 		case TokenFlag::FLAG_BT:
-			switch(type)
+			switch (type)
 			{
 			case BT_INT8:
 				break;
@@ -204,7 +205,7 @@ TreeNode* parseTokens(const vector<Token>& tokens)
 			break;
 
 		case TokenFlag::FLAG_BRACKETS:
-			switch(type)
+			switch (type)
 			{
 			case PAREN_LEFT:
 				break;
@@ -229,7 +230,7 @@ TreeNode* parseTokens(const vector<Token>& tokens)
 			break;
 
 		case TokenFlag::FLAG_LITERAL:
-			switch(type)
+			switch (type)
 			{
 			case LITERAL_INTEGER:
 				break;
@@ -243,15 +244,9 @@ TreeNode* parseTokens(const vector<Token>& tokens)
 			break;
 
 		default:
-			switch(type)
+			switch (type)
 			{
 			case WHITESPACE:
-				break;
-			case COMMENT_SINGLE:
-				break;
-			case COMMENT_BLOCK_OPEN:
-				break;
-			case COMMENT_BLOCK_CLOSE:
 				break;
 			case COMMA:
 				break;
@@ -269,5 +264,5 @@ TreeNode* parseTokens(const vector<Token>& tokens)
 		}
 	}
 
-	return NULL; //for now
+	return 0; //for now
 }
