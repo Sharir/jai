@@ -1,3 +1,5 @@
+#include "utils.h"
+
 bool isNewline(char c) {
 	return c == '\n' || c =='\r';
 }

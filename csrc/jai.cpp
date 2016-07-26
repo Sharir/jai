@@ -8,7 +8,25 @@
 using namespace std;
 
 void printToken(const Token& t) {
-	printf("Token { type: %d\tlexeme: '%s' }\n", t.type, t.lexeme.c_str());
+	printf("Token { type: %d\tlexeme: '", t.type);
+	string s(t.lexeme);
+	for(std::string::iterator it = s.begin() ; it != s.end() ; it++)
+	{
+		if(it[0] == '\n')
+		{
+			putchar('\\');
+			putchar('n');
+		}
+		else if(it[0] == '\t')
+		{
+			putchar('\\');
+			putchar('t');
+		}
+		else
+			putchar(it[0]);
+	}
+
+	printf("' }\n");
 }
 
 int main(int argc, char** argv) {
