@@ -15,7 +15,7 @@ TreeNode* parseTokens(const vector<Token>& tokens)
 	int msb = 0;
 	int type = 0;
 
-	for(int i = 0 ; i < tokens.size() ; i++)
+	for(unsigned int i = 0 ; i < tokens.size() ; i++)
 	{
 		type = tokens[i].type;
 		msb = most_significant_bit_set(type);
@@ -149,10 +149,6 @@ TreeNode* parseTokens(const vector<Token>& tokens)
 			case KW_RETURN:
 				break;
 			case KW_SIZEOF:
-				break;
-			case KW_SIZEOF:
-				break;
-			case KW_SOA:
 				break;
 			case KW_SOA:
 				break;
