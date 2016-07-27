@@ -1,9 +1,11 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include "file.h"
-#include "lexer.h"
 #include "os.h"
+#include "file.h"
+#include "preprocessor.h"
+#include "lexer.h"
+#include "parser.h"
 
 using namespace std;
 
@@ -27,6 +29,29 @@ void printToken(const Token& t) {
 	}
 
 	printf("' }\n");
+}
+
+string linedString(string s)
+{
+	int number = 1, len = s.length(), j;
+	string ret;
+	
+	for(int i = 0 ; i < len ; i++)
+	{
+		ret += to_string(number) + ": ";
+		
+		j = i;
+		while(s[j] != '\n' && j < len)
+		{
+			ret += s[j];
+			j++;
+		}
+		ret += '\n';
+		number++;
+		i = j;
+	}
+
+	return ret;
 }
 
 int main(int argc, char** argv) {
@@ -65,9 +90,16 @@ int main(int argc, char** argv) {
 	outFileName += ".exe";
 #endif
 
-	string data = readFile(mainFileName);
+	string data = readFile(mainFileName); //reading from the source file
+
+	cout << "Source: " << endl << linedString(data) << endl;
+
+	data = processFile(data); //preprocessor - deleting comments, converting multiline strings to one-liners and handling directives
+
+	cout << "Preprocessed: " << endl << linedString(data) << endl;
+
 	vector<Token> tokens;
-	tokenize(data, tokens);
+	tokenize(data, tokens); //lexer - tokenizing the source file into tokens - keywords, identifiers, operators, whitespaces and so on
 
 	for (const Token& t : tokens) {
 		printToken(t);

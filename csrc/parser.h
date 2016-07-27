@@ -8,16 +8,14 @@
 
 #include "token.h"
 
-using namespace std;
-
 typedef struct TreeNode {
 	Token data;
-	list<TreeNode*> children;
+	std::list<TreeNode*> children;
 
 	TreeNode(Token d) : data(d) {}
 }TreeNode;
-
+/*
 int most_significant_bit_set(int num);
-TreeNode* parseTokens(const vector<Token>& tokens);
-
+int parseTokens(const vector<Token>& tokens, TreeNode* tree);
+*/
 #endif
