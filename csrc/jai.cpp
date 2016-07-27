@@ -90,16 +90,16 @@ int main(int argc, char** argv) {
 	outFileName += ".exe";
 #endif
 
-	string data = readFile(mainFileName); //reading from the source file
+	string src = readFile(mainFileName); //reading from the source file
 
-	cout << "Source: " << endl << linedString(data) << endl;
+	cout << "Source: " << endl << linedString(src) << endl;
 
-	data = processFile(data); //preprocessor - deleting comments, converting multiline strings to one-liners and handling directives
+	src = processFile(src); //preprocessor - deleting comments, converting multiline strings to one-liners and handling directives
 
-	cout << "Preprocessed: " << endl << linedString(data) << endl;
+	cout << "Preprocessed: " << endl << linedString(src) << endl;
 
 	vector<Token> tokens;
-	tokenize(data, tokens); //lexer - tokenizing the source file into tokens - keywords, identifiers, operators, whitespaces and so on
+	tokenize(src, tokens); //lexer - tokenizing the source file into tokens - keywords, identifiers, operators, whitespaces and so on
 
 	for (const Token& t : tokens) {
 		printToken(t);
