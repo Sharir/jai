@@ -4,6 +4,8 @@
 #include <string>
 #include <algorithm>
 
-std::string processFile(std::string file);
+int count_occurences(std::string, char, size_t, size_t);
+std::string prepare(std::string);
+std::string processFile(std::string);
 
 #endif

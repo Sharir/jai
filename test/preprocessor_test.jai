@@ -1,6 +1,6 @@
 main :: () {
 	print("Hello  
-	world, 
+	world,	
 	I 
 	am 
 	so 
@@ -9,6 +9,12 @@ main :: () {
 	actually work and are 
 	supported in Jai.\n"); //another one
 	//Some random comment
-	print("Normal string"); //here
+	print("After some one-line comments"); //here
+	/* Some multiline
+	comment
+	/*WOW THAT'S SO COOL
+	/*HOW*/ U DO DIS?*/
+	*/
+	print("After a comment block");
 } 
 //and even here
