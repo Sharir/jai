@@ -2,20 +2,13 @@
 
 using namespace std;
 
-int count_occurences(string str, char ch, size_t beg = 0, size_t s_end = -1)
+string processFile(string src)
 {
-	int n = 0;
+	string ret;
+	
+	ret = prepare(src); //inline multi-line strings & remove comments and blocks
 
-	if (s_end == -1)
-		s_end = str.length();
-
-	for (unsigned int i = beg ; i < s_end ; i++)
-	{
-		if (str[i] == ch)
-			n++;
-	}
-
-	return n;
+	return ret;
 }
 
 string prepare(string src)
@@ -130,11 +123,18 @@ string prepare(string src)
 	return ret;
 }
 
-string processFile(string src)
+int count_occurences(string str, char ch, size_t beg = 0, size_t s_end = -1)
 {
-	string ret;
-	
-	ret = prepare(src); //inline multi-line strings & remove comments and blocks
+	int n = 0;
 
-	return ret;
+	if (s_end == -1)
+		s_end = str.length();
+
+	for (unsigned int i = beg ; i < s_end ; i++)
+	{
+		if (str[i] == ch)
+			n++;
+	}
+
+	return n;
 }
