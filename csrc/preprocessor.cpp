@@ -33,9 +33,10 @@ string prepare(string src)
 		switch (src[i])
 		{
 		case '"':
+			block_end = i;
 			do
 			{
-				block_end = src.find('"', i + 1);
+				block_end = src.find('"', block_end + 1);
 			} while (src[block_end - 1] == '\\');
 
 			str = src.substr(i, block_end - i + 1);
