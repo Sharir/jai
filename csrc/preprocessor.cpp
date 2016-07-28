@@ -37,6 +37,10 @@ string prepare(string src)
 			do
 			{
 				block_end = src.find('"', block_end + 1);
+				if (block_end == string::npos)
+				{
+					printf("Preprocessor Error:	string is not terminated properly.\n");
+				}
 			} while (src[block_end - 1] == '\\');
 
 			str = src.substr(i, block_end - i + 1);
@@ -103,7 +107,7 @@ string prepare(string src)
 
 						if (block_end == string::npos)
 						{
-							printf("Preprocessor error: comment block is not terminated");
+							printf("Preprocessor Error: comment block is not terminated\n");
 							exit(1);
 						}
 
@@ -115,25 +119,6 @@ string prepare(string src)
 
 					i = block_end + 1;
 					continue;
-
-					//algorithm idea - very basic:
-					/*
-						start - start of whole block.
-						pos - start of current block (will be different than start in nested comment blocks).
-						block_end - end of whole block (will be different through the run of the loop until absolute end is found).
-
-						start = i;
-						pos = i;
-						block_end = find first occurence of "* /" (without the space);
-
-						while ( find "/*" between pos and block_end == found)
-						{
-							pos = found;
-							block_end = find "* /" from block_end + 2 and on
-						}
-
-						after everything - just i = block_end + 2
-					*/
 				}
 			}
 			break;
