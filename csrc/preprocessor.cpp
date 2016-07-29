@@ -37,7 +37,7 @@ string prepare(string src)
 			do
 			{
 				block_end = src.find('"', block_end + 1);
-			} while (src[block_end - 1] == '\\');
+			} while (block_end != string::npos && src[block_end - 1] == '\\');
 
 			str = src.substr(i, block_end - i + 1);
 			s_len = str.length();
