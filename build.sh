@@ -40,7 +40,7 @@ if [ $BUILD = true ]; then
 		POSTFIX='-g'
 	fi
 
-	g++ -std=c++11 `find ./csrc -name \\*.c -o -name \\*.h -o -name \\*.cpp -o -name \\*.c++ -o -name \\*.hpp | tr '\n' ' '` -o bin/temp $POSTFIX
+	g++ -std=c++11 -Wall `find ./csrc -name \\*.c -o -name \\*.h -o -name \\*.cpp -o -name \\*.c++ -o -name \\*.hpp | tr '\n' ' '` -o bin/temp $POSTFIX
 
 	if [ $? -eq 0 ]; then
 		mv bin/temp bin/$NAME
