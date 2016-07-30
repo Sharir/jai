@@ -29,14 +29,23 @@
 					"cmd": ["bash", "-c", "./build.sh -bd"]
 				},
 				{
-					"name": "Run Last",
+					"name": "Test",
 					"cmd": ["bash", "-c", "./build.sh -r"]
 				},
 				{
-					"name": "Build & Run",
+					"name": "Build & Test",
 					"cmd": ["bash", "-c", "./build.sh -br"]
 				}
 			]
+		},
+		{
+			"name": "Jai - Test This File",
+			"cmd": ["bash", "-c", "./build.sh -r -t $file"],
+			"working_dir": "${project_path}",
+			"windows": {
+				"path": "c:\\cygwin64\\bin;"
+			},
+			"selector": "source.jai"
 		}
 	]
 }

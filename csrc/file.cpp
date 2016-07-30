@@ -3,7 +3,7 @@
 
 using namespace std;
 
-string readFile(string name) {
+char* readFile(string name) {
 	FILE* f;
 	char* str;
 	int size;
@@ -26,9 +26,7 @@ string readFile(string name) {
 
 	fclose(f);
 
-	string ret(str);
-	free(str);
-	return ret;
+	return str;
 }
 
 bool writeFile(string name, string data) {

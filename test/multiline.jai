@@ -9,7 +9,9 @@ main :: () {
 	actually work and are 
 	supported in Jai.\n"); //another one
 	//Some random comment
-	print("After some one-line comments"); //here
+	if (true) {
+		print("After some one-line comments"); //here
+	}
 	/* Some multiline
 	comment
 	/*WOW THAT'S SO COOL

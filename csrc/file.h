@@ -3,7 +3,7 @@
 
 #include <string>
 
-std::string readFile(std::string);
+char* readFile(std::string);
 bool writeFile(std::string, std::string);
 
 #endif

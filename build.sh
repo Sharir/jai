@@ -5,19 +5,25 @@ NAME='jai'
 BUILD=false
 RUN=false
 DEBUG=false
+TEST='test/hello.jai'
 
-while getopts brd opts; do
+while getopts 'brdt:' opts; do
 	case $opts in
 		b) BUILD=true;;
 		r) RUN=true;;
 		d) DEBUG=true;;
+		t) TEST=$OPTARG;;
 	esac
 done
 
-TEST_ARGS='test/hello.jai'
 run() {
 	if [ $RUN = true ]; then
-		./bin/$NAME $TEST_ARGS
+		./bin/$NAME $TEST
+		EC=$?
+
+		if [ $EC -ne 0 ]; then
+			echo "Exit code $EC"
+		fi
 	fi
 }
 

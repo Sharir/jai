@@ -10,48 +10,7 @@
 using namespace std;
 
 void printToken(const Token& t) {
-	printf("Token { type: %d\tlexeme: '", t.type);
-	string s(t.lexeme);
-	for(std::string::iterator it = s.begin() ; it != s.end() ; it++)
-	{
-		if(it[0] == '\n')
-		{
-			putchar('\\');
-			putchar('n');
-		}
-		else if(it[0] == '\t')
-		{
-			putchar('\\');
-			putchar('t');
-		}
-		else
-			putchar(it[0]);
-	}
-
-	printf("' }\n");
-}
-
-string linedString(string s)
-{
-	int number = 1, len = s.length(), j;
-	string ret;
-	
-	for(int i = 0 ; i < len ; i++)
-	{
-		ret += to_string(number) + ": ";
-		
-		j = i;
-		while(s[j] != '\n' && j < len)
-		{
-			ret += s[j];
-			j++;
-		}
-		ret += '\n';
-		number++;
-		i = j;
-	}
-
-	return ret;
+	printf("Token { type: %d\t\tline: %d\t\tcol: %d\t\tlexeme: '%s' }\n", t.type, t.line, t.col, t.lexeme.c_str());
 }
 
 int main(int argc, char** argv) {
@@ -90,16 +49,18 @@ int main(int argc, char** argv) {
 	outFileName += ".exe";
 #endif
 
-	string src = readFile(mainFileName); //reading from the source file
+	char* file = readFile(mainFileName); // Reading from the source file
+	if (!file) {
+		printf("Error: file '%s' doesn't exist\n", mainFileName.c_str());
+		return 1;
+	}
 
-	cout << "Source: " << endl << linedString(src) << endl;
+	string src = file;
 
-	src = processFile(src); //preprocessor - deleting comments, converting multiline strings to one-liners and handling directives
-
-	cout << "Preprocessed: " << endl << linedString(src) << endl;
+	src = processFile(src); // Preprocessor - handling directives
 
 	vector<Token> tokens;
-	tokenize(src, tokens); //lexer - tokenizing the source file into tokens - keywords, identifiers, operators, whitespaces and so on
+	tokenize(src, tokens); // Lexer - converting the source file into tokens - keywords, identifiers, operators etc.
 
 	for (const Token& t : tokens) {
 		printToken(t);

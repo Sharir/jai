@@ -3,5 +3,7 @@
 
 bool isWhitespace(char);
 bool isNewline(char);
+bool isNumeric(char);
+bool isAlphabetical(char);
 
 #endif
