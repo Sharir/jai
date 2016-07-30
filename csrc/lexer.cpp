@@ -1,19 +1,35 @@
 #include <string>
-#include "lexer.h"
+#include <vector>
 #include "token.h"
 #include "utils.h"
 
 using namespace std;
 
+/*
+
+TODO:
+- Add binary, octal and hex integer literals (consider floats)
+- Add token line and col indices
+
+- Tell off Tzah for:
+	- Including stuff in the header file instead of the source file (algorithm in preproc)
+	- Putting "private" function declarations in the header file (count_occurrences, prepare - in preproc)
+	- Explicitly using cpp iterators - much better to use builtin syntax or managed functions
+
+*/
+
 string empty("");
 
-Token makeToken(TokenType, string);
+Token makeToken(TokenType, string, int = -1, int = -1);
 bool safeGetNext(string&, int, int&, char&);
 bool allowedFirstIdChar(char);
 bool allowedIdChar(char);
 
 TokenType getDirective(string);
 TokenType getKwBtId(string);
+
+int gLine;
+int gCol;
 
 void tokenize(string src, vector<Token>& tokens) {
 	int lexIndex = -1;
@@ -32,6 +48,24 @@ void tokenize(string src, vector<Token>& tokens) {
 		if (isWhitespace(c)) {
 			while (safeGetNext(src, length, lexIndex, c) && isWhitespace(c));
 			--lexIndex;
+		}
+
+		// Both types of comments
+		else if (c == '/' && lexIndex + 1 < length && (src[lexIndex + 1] == '/' || src[lexIndex + 1] == '*')) {
+			safeGetNext(src, length, lexIndex, c); // We already explicitly checked above and know it's safe
+			if (c == '/') {
+				while (safeGetNext(src, length, lexIndex, c) && !isNewline(c));
+			} else { // We can only enter this if the next char was '/' or '*', so we know for certain this else means "/*"
+				tokenStart = 1; // Using tokenStart as a temp integer
+				tempb = false;
+				while (safeGetNext(src, length, lexIndex, c)) {
+					if (c == '/' && safeGetNext(src, length, lexIndex, c) && c == '*') {
+						++tokenStart;
+					} else if (c == '*' && safeGetNext(src, length, lexIndex, c) && c == '/') {
+						if (--tokenStart <= 0) break;
+					}
+				}
+			}
 		}
 
 		// Numbers
@@ -84,6 +118,7 @@ void tokenize(string src, vector<Token>& tokens) {
 		// Strings
 		else if (c == '"') {
 			tempb = false;
+			temps = "";
 			while (true) {
 				if (!safeGetNext(src, length, lexIndex, c)) {
 					printf("Syntax Error: unterminated string\n");
@@ -91,18 +126,20 @@ void tokenize(string src, vector<Token>& tokens) {
 				}
 
 				if (isNewline(c)) {
-					printf("Syntax Error: unterminated string\n");
-					break;
+					// Once we hit a newline char (\n or \r), we negate any whitespace that follows to allow arbitrary indentation, including space indents (not just tab indents)
+					while (safeGetNext(src, length, lexIndex, c) && isWhitespace(c));
 				}
 
 				if (c == '\\' && !tempb) {
 					tempb = true;
 				} else if (c == '"' && !tempb) {
-					tokens.push_back(makeToken(LITERAL_STRING, src.substr(tokenStart + 1, lexIndex - tokenStart - 1)));
+					tokens.push_back(makeToken(LITERAL_STRING, temps));
 					break;
 				} else if (tempb) {
 					tempb = false;
 				}
+
+				temps += c;
 			}
 		}
 
@@ -267,14 +304,14 @@ void tokenize(string src, vector<Token>& tokens) {
 			--lexIndex;
 			if (lexIndex == tokenStart) {
 				printf("Syntax Error: empty directive not allowed\n");
-			}
-
-			temps = src.substr(tokenStart + 1, lexIndex - tokenStart);
-			tempt = getDirective(temps);
-			if (tempt == UNKNOWN) {
-				printf("Syntax Error: unknown directive '#%s'\n", temps.c_str());
 			} else {
-				tokens.push_back(makeToken(tempt, empty));
+				temps = src.substr(tokenStart + 1, lexIndex - tokenStart);
+				tempt = getDirective(temps);
+				if (tempt == UNKNOWN) {
+					printf("Syntax Error: unknown directive '#%s'\n", temps.c_str());
+				} else {
+					tokens.push_back(makeToken(tempt, empty));
+				}
 			}
 		}
 
@@ -297,10 +334,12 @@ void tokenize(string src, vector<Token>& tokens) {
 	}
 }
 
-Token makeToken(TokenType t, string s) {
+Token makeToken(TokenType t, string s, int line, int col) {
 	Token token;
 	token.type = t;
 	token.lexeme = s;
+	token.line = line < 0 ? gLine : line;
+	token.col = col < 0 ? gCol : col;
 	return token;
 }
 

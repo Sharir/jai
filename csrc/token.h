@@ -136,6 +136,8 @@ enum TokenType {
 typedef struct {
 	TokenType type;
 	std::string lexeme;
+	int line;
+	int col;
 } Token;
 
 #endif

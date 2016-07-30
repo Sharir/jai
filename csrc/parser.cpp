@@ -33,8 +33,7 @@ int parseTokens(const vector<Token>& tokens, TreeNode* tree)
 	int type = 0;
 	int size = tokens.size();
 
-	for (int i = 0 ; i < size ; i++)
-	{
+	for (int i = 0 ; i < size ; i++) {
 		type = tokens[i].type;
 	}
 

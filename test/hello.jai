@@ -1,6 +1,11 @@
+node :: struct {
+	left!: node*;
+	right!: node*;
+}
+
 main :: () {
+	i: int = 42;
 	myVar: float = 13.4f;
-	i: int;
 	j := 13.2;
-	print("Hello world\"\n");
+	print("Hello world\n");
 }
