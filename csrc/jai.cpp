@@ -1,17 +1,9 @@
 #include <iostream>
 #include <string>
-#include <vector>
 #include "os.h"
-#include "file.h"
-#include "preprocessor.h"
-#include "lexer.h"
-#include "parser.h"
+#include "compiler.h"
 
 using namespace std;
-
-void printToken(const Token& t) {
-	printf("Token { type: %d\t\tline: %d\t\tcol: %d\t\tlexeme: '%s' }\n", t.type, t.line, t.col, t.lexeme.c_str());
-}
 
 int main(int argc, char** argv) {
 	string* p_mainFileName = NULL;
@@ -49,22 +41,7 @@ int main(int argc, char** argv) {
 	outFileName += ".exe";
 #endif
 
-	char* file = readFile(mainFileName); // Reading from the source file
-	if (!file) {
-		printf("Error: file '%s' doesn't exist\n", mainFileName.c_str());
-		return 1;
-	}
-
-	string src = file;
-
-	src = processFile(src); // Preprocessor - handling directives
-
-	vector<Token> tokens;
-	tokenize(src, tokens); // Lexer - converting the source file into tokens - keywords, identifiers, operators etc.
-
-	for (const Token& t : tokens) {
-		printToken(t);
-	}
+	compileFile(mainFileName);
 
 	return 0;
 }

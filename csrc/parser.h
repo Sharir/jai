@@ -4,7 +4,6 @@
 #define IS_FLAG_SET(a, b) ((a & b) != 0)
 
 #include <list>
-#include <vector>
 
 #include "token.h"
 
@@ -13,7 +12,7 @@ typedef struct TreeNode {
 	std::list<TreeNode*> children;
 
 	TreeNode(Token d) : data(d) {}
-}TreeNode;
+} TreeNode;
 /*
 int most_significant_bit_set(int num);
 int parseTokens(const vector<Token>& tokens, TreeNode* tree);
