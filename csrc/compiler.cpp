@@ -29,7 +29,6 @@ void compileFile(string name) {
 	char* file = readFile(name); // Reading from the source file
 	if (!file) {
 		logCompiler(ERROR, ("couldn't read file " + name).c_str());
-		// printf("Error: file '%s' doesn't exist\n", name.c_str());
 		exit(1);
 	}
 
@@ -61,13 +60,24 @@ void logCompiler(LogLevel level, const char* msg, Token* token) {
 	const char* levelString;
 
 	switch (level) {
-#if COMPILER_DEBUG
-		case DEBUG: levelString = "DEBUG"; break;
+		case DEBUG:
+#ifdef COMPILER_DEBUG
+			levelString = "DEBUG";
+			break;
+#else
+			return;
 #endif
 
-		case INFO: levelString = "info"; break;
-		case WARN: levelString = "warning"; break;
-		case ERROR: gFatalError = true; levelString = "error"; break;
+		case INFO:
+			levelString = "info";
+			break;
+		case WARN:
+			levelString = "warning";
+			break;
+		case ERROR:
+			gFatalError = true;
+			levelString = "error";
+			break;
 	}
 
 	if (token) {

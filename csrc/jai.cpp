@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <iostream>
 #include <string>
 #include "os.h"
@@ -5,43 +6,58 @@
 
 using namespace std;
 
-int main(int argc, char** argv) {
-	string* p_mainFileName = NULL;
-	
-	// parse cli
+struct parsedCli {
+	string mainFile;
+	string outFile;
+	bool isLibrary; // Executable or library?
+	bool includeDebugSymbols;
+};
+
+parsedCli cli(int, char* []);
+
+int main(int argc, char* argv[]) {
+	parsedCli args = cli(argc, argv);
+
+	compileFile(args.mainFile);
+}
+
+parsedCli cli(int argc, char* argv[]) {
+	parsedCli args;
+	args.isLibrary = false;
+	args.includeDebugSymbols = false;
+
+	char* mainFile = NULL;
+
 	for (int i = 1; i < argc; i++) {
-		if (!p_mainFileName) {
-			p_mainFileName = new string(argv[i]);
+		if (!mainFile) {
+			mainFile = argv[i];
 		} else {
 			printf("Please specify only one main file\n");
-			return 1;
+			exit(1);
 		}
 	}
 
-	if (!p_mainFileName) {
+	if (!mainFile) {
 		printf("Please specify a main file\n");
-		return 1;
+		exit(1);
 	}
 
-	string mainFileName = *p_mainFileName;
-	delete p_mainFileName;
+	args.mainFile = mainFile;
 
 	// decide output filename
 #ifdef OS_WIN
-	int index = mainFileName.rfind("\\");
+	int index = args.mainFile.rfind("\\");
 #else
-	int index = mainFileName.rfind("/");
+	int index = args.mainFile.rfind("/");
 #endif
 
-	string outFileName = index < 0 ? mainFileName : mainFileName.substr(index + 1, mainFileName.length() - index - 1);
-	index = outFileName.rfind(".");
-	outFileName = index < 0 ? outFileName + '_' : outFileName.substr(0, index);
+	args.outFile = index < 0 ? args.mainFile : args.mainFile.substr(index + 1, args.mainFile.length() - index - 1);
+	index = args.outFile.rfind(".");
+	args.outFile = index < 0 ? args.outFile + '_' : args.outFile.substr(0, index);
 
 #ifdef OS_WIN
-	outFileName += ".exe";
+	args.outFile += ".exe";
 #endif
 
-	compileFile(mainFileName);
-
-	return 0;
+	return args;
 }

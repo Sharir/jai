@@ -4,12 +4,10 @@
 #include <string>
 #include "token.h"
 
-#define COMPILER_DEBUG 1
+#define COMPILER_DEBUG
 
 enum LogLevel {
-#if COMPILER_DEBUG
 	DEBUG,
-#endif
 	INFO,
 	WARN,
 	ERROR,

@@ -9,17 +9,16 @@ using namespace std;
 /*
 
 TODO:
-- Add binary, octal and hex integer literals (consider floats)
 - Fix first tab after newline getting col 3 instead of 2
-- Fix number literals:
-	- If ended with '.' - deal with it properly (and it's integer literal)
-	- Fix up end of file and end of line behavior - try to understand why in all shits I did what I did there
+- Remove multi-character character constant support
 
 */
 
-string empty("");
+const string empty("");
 
-Token makeToken(TokenType, string, int = -1, int = -1);
+Token makeToken(TokenType, string);
+Token* makeErrorToken();
+
 bool next(string&, int, int&, char&);
 void prev(string&, int, int&, char&);
 bool allowedFirstIdChar(char);
@@ -77,23 +76,26 @@ void tokenize(string src, vector<Token>& tokens) {
 		}
 
 		// Numbers
-		else if (isNumeric(c)) {
-			tempb = false;
+		else if (isNumeric(c) || (c == '.' && lexIndex + 1 < length && isNumeric(src[lexIndex + 1]))) {
+			tempt = LITERAL_INTEGER;
+			if (c == '0' && lexIndex + 1 < length && src[lexIndex + 1] == 'x') {
+				next(src, length, lexIndex, c);
+			}
+
 			while (true) {
-				if (!next(src, length, lexIndex, c)) return;
-				if (isNewline(c)) return;
+				if (!next(src, length, lexIndex, c) || (!isNumeric(c) && c != '.')) {
+					if (!isAlphabetical(c)) prev(src, length, lexIndex, c); // Allows literal suffixes like f for floats
+					tokens.push_back(makeToken(tempt, src.substr(tokenStart, lexIndex - tokenStart + 1)));
+					break;
+				}
 
 				if (c == '.') {
-					if (tempb) {
-						logCompiler(ERROR, "too many decimal points in number");
+					if (tempt == LITERAL_FLOATING_POINT) {
+						logCompiler(ERROR, "too many decimal points in number", makeErrorToken());
 						break;
 					}
 
-					tempb = true;
-				} else if (!isNumeric(c)) {
-					if (!isAlphabetical(c)) prev(src, length, lexIndex, c); // Allows literal suffixes like f for floats
-					tokens.push_back(makeToken(tempb ? LITERAL_FLOATING_POINT : LITERAL_INTEGER, src.substr(tokenStart, lexIndex - tokenStart + 1)));
-					break;
+					tempt = LITERAL_FLOATING_POINT;
 				}
 			}
 		}
@@ -103,12 +105,12 @@ void tokenize(string src, vector<Token>& tokens) {
 			tempb = false;
 			while (true) {
 				if (!next(src, length, lexIndex, c)) {
-					printf("Syntax Error: unterminated character literal\n");
+					logCompiler(ERROR, "unterminated character literal", makeErrorToken());
 					return;
 				}
 
 				if (isNewline(c)) {
-					printf("Syntax Error: unterminated character literal\n");
+					logCompiler(ERROR, "unterminated character literal", makeErrorToken());
 					break;
 				}
 
@@ -129,7 +131,7 @@ void tokenize(string src, vector<Token>& tokens) {
 			temps = "";
 			while (true) {
 				if (!next(src, length, lexIndex, c)) {
-					printf("Syntax Error: unterminated string\n");
+					logCompiler(ERROR, "unterminated string", makeErrorToken());
 					return;
 				}
 
@@ -311,12 +313,12 @@ void tokenize(string src, vector<Token>& tokens) {
 			while (next(src, length, lexIndex, c) && allowedIdChar(c));
 			prev(src, length, lexIndex, c);
 			if (lexIndex == tokenStart) {
-				printf("Syntax Error: empty directive not allowed\n");
+				logCompiler(WARN, "empty directive does nothing", makeErrorToken());
 			} else {
 				temps = src.substr(tokenStart + 1, lexIndex - tokenStart);
 				tempt = getDirective(temps);
 				if (tempt == UNKNOWN) {
-					printf("Syntax Error: unknown directive '#%s'\n", temps.c_str());
+					logCompiler(WARN, ("unknown directive '#" + temps + "'").c_str(), makeErrorToken());
 				} else {
 					tokens.push_back(makeToken(tempt, empty));
 				}
@@ -337,18 +339,25 @@ void tokenize(string src, vector<Token>& tokens) {
 		}
 
 		else {
-			printf("Syntax Error: unexpected symbol '%c'\n", c);
+			logCompiler(ERROR, (string("unexpected symbol '") + c + "'").c_str(), makeErrorToken());
 		}
 	}
 }
 
-Token makeToken(TokenType t, string s, int line, int col) {
+Token makeToken(TokenType t, string s) {
 	Token token;
 	token.type = t;
 	token.lexeme = s;
-	token.line = line < 0 ? gCurLine : line;
-	token.col = col < 0 ? gCurCol : col;
+	token.line = gCurLine;
+	token.col = gCurCol;
 	return token;
+}
+
+Token errorToken = makeToken(UNKNOWN, empty);
+Token* makeErrorToken() {
+	errorToken.line = gCurLine;
+	errorToken.col = gCurCol;
+	return &errorToken;
 }
 
 bool next(string& data, int length, int& index, char& c) {
@@ -442,4 +451,3 @@ TokenType getKwBtId(string s) {
 	
 	return IDENTIFIER;
 }
-
