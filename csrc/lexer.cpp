@@ -10,6 +10,8 @@ using namespace std;
 
 TODO:
 - Fix first tab after newline getting col 3 instead of 2
+- In general, there are some bugs with the line number, where new lines aren't always handled properly.
+		For example, in test/hello.jai, The "Hello world\n" string is considered in line 8 even though it's in line 10
 - Remove multi-character character constant support
 
 */

@@ -12,30 +12,35 @@
 using namespace std;
 
 void printTokens(vector<Token>&);
+void printSrcLineSegment(string&, int, int);
 
-// struct CompiledFile {
-// 	string name;
-// 	// This will be cached in gFiles below, and will be used if multiple files import it. This struct should
-// 	// basically contain the symbols. Maybe also ride on this for actual compiled tree or generated code
-// };
+struct CompiledFile {
+	string name;
+	string src;
+	// This will be cached in gFiles below, and will be used if multiple files import it. This struct should
+	// basically contain the symbols. Maybe also ride on this for actual compiled tree or generated code
+};
 
 bool gFatalError = false;
 stack<string> gFilesBeingCompiled;
-// vector<CompiledFile> gFiles;
+vector<CompiledFile*> gFiles;
 
 void compileFile(string name) {
 	gFilesBeingCompiled.push(name);
 
 	char* file = readFile(name); // Reading from the source file
 	if (!file) {
-		logCompiler(ERROR, ("couldn't read file " + name).c_str());
+		logCompiler(ERROR, ("couldn't read file '" + name + "'").c_str());
 		exit(1);
 	}
 
-	string src = file;
+	CompiledFile* cf = new CompiledFile;
+	cf->name = name;
+	cf->src = file;
+	gFiles.push_back(cf);
 
 	vector<Token> tokens;
-	tokenize(src, tokens); // Lexer - converting the source file into tokens - keywords, identifiers, operators etc.
+	tokenize(cf->src, tokens); // Lexer - converting the source file into tokens - keywords, identifiers, operators etc.
 	if (gFatalError) exit(1);
 
 	printTokens(tokens);
@@ -81,12 +86,72 @@ void logCompiler(LogLevel level, const char* msg, Token* token) {
 	}
 
 	if (token) {
-		printf("%s:%d %s: %s\n", gFilesBeingCompiled.top().c_str(), token->line, levelString, msg);
-		// Print line segment from source file that contains token
-		// Print '^' beneath the start of the token in the previous line
+		string filename = gFilesBeingCompiled.top();
+		printf("%s:%d:%d %s: %s\n", filename.c_str(), token->line, token->col, levelString, msg);
+		printSrcLineSegment(filename, token->line, token->col);
 	} else {
-		printf("Jai: %s: %s\n", levelString, msg);
+		printf("jai: %s: %s\n", levelString, msg);
 	}
+}
+
+#define MAX_COL_MARGIN 50
+void printSrcLineSegment(string& name, int line, int col) {
+	// Print line segment from source file that contains token
+	// Print '^' beneath the start of the token in the previous line
+
+	string src;
+	for (const CompiledFile* cf : gFiles) {
+		if (cf->name == name) {
+			src = cf->src;
+		}
+	}
+
+	if (src.empty()) return;
+
+	int newlineCount = 1; // Line index starts from 1 for humans
+	int index = -1;
+	int length = src.length();
+	while (++index < length && newlineCount < line) {
+		if (src[index] == '\n') { // Only \n, because \r\n should count as one newline
+			++newlineCount;
+		}
+	}
+
+	if (index >= length) return;
+
+	// length will temporarily act as the index of the end of the line
+	length = src.find('\n', index + 1);
+	if (length == (int)string::npos) length = src.length();
+	if (src[length - 1] == '\r') --length;
+
+	// Neglect indentation at start of line for error reporting
+	while (src[index] == '\t' || src[index] == ' ') {
+		++index;
+		--col;
+	}
+
+	// Now length is the actual length of the line segment
+	length = length - index;
+	if (length <= 0 || col <= 0 || col >= length) return;
+
+	// Ensure no more than MAX_COL_MARGIN characters before and after the col position, for long lines
+	if (col > MAX_COL_MARGIN) {
+		index += col - MAX_COL_MARGIN;
+		length -= col - MAX_COL_MARGIN;
+		col = MAX_COL_MARGIN;
+	}
+
+	if (length - col > MAX_COL_MARGIN) {
+		length = col + MAX_COL_MARGIN;
+	}
+
+	src = src.substr(index, length); // Only the relevant line segment
+	
+	printf("\t%s\n\t", src.c_str());
+	while (--col) {
+		printf(" ");
+	}
+	printf("^\n");
 }
 
 void printTokens(vector<Token>& tokens) {
