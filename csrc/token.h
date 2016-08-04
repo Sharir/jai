@@ -131,6 +131,7 @@ enum TokenType {
 	// Compiler (preprocessor) directives
 	DIR_IMPORT                  ,	// #import
 	DIR_RUN                     ,	// #run
+	DIR_USE                     ,	// #use
 };
 
 typedef struct {

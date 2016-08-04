@@ -395,6 +395,7 @@ bool allowedIdChar(char c) {
 TokenType getDirective(string s) {
 	if (s == "import") return DIR_IMPORT;
 	if (s == "run") return DIR_RUN;
+	if (s == "use") return DIR_USE;
 	return UNKNOWN;
 }
 
