@@ -9,9 +9,6 @@ using namespace std;
 /*
 
 TODO:
-- Fix first tab after newline getting col 3 instead of 2
-- In general, there are some bugs with the line number, where new lines aren't always handled properly.
-		For example, in test/hello.jai, The "Hello world\n" string is considered in line 8 even though it's in line 10
 - Remove multi-character character constant support
 
 */
@@ -106,12 +103,7 @@ void tokenize(string src, vector<Token>& tokens) {
 		else if (c == '\'') {
 			tempb = false;
 			while (true) {
-				if (!next(src, length, lexIndex, c)) {
-					logCompiler(ERROR, "unterminated character literal", makeErrorToken());
-					return;
-				}
-
-				if (isNewline(c)) {
+				if (!next(src, length, lexIndex, c) || isNewline(c)) {
 					logCompiler(ERROR, "unterminated character literal", makeErrorToken());
 					break;
 				}
@@ -139,7 +131,7 @@ void tokenize(string src, vector<Token>& tokens) {
 
 				if (isNewline(c)) {
 					// Once we hit a newline char (\n or \r), we negate any whitespace that follows to allow arbitrary indentation, including space indents (not just tab indents)
-					while (next(src, length, lexIndex, c) && isWhitespace(c));
+					while (next(src, length, lexIndex, c) && isNewline(c));
 				}
 
 				if (c == '\\' && !tempb) {
@@ -368,7 +360,7 @@ bool next(string& data, int length, int& index, char& c) {
 
 		if (c == '\n') { // Only \n, since we don't need \r\n counting as two newlines
 			++gLine;
-			gCol = 1;
+			gCol = 0; // Line starts with col 1, just that the upcoming call to next will increment gCol to 1, reading the first character
 		} else {
 			++gCol;
 		}
@@ -380,9 +372,6 @@ bool next(string& data, int length, int& index, char& c) {
 
 void prev(string& data, int length, int& index, char& c) {
 	// Main use is to also decrement line and col globals appropriately to accomodate for look ahead calls to next
-	--index;
-	c = data[index];
-
 	if (c == '\n') {
 		// We should set gCol to 0, since next should be called right after a call to prev, incrementing gCol to 1,
 		// which is good, because it's the start of the line
@@ -391,6 +380,8 @@ void prev(string& data, int length, int& index, char& c) {
 	} else {
 		--gCol;
 	}
+
+	c = data[--index];
 }
 
 bool allowedFirstIdChar(char c) {
