@@ -77,8 +77,9 @@ void tokenize(string src, vector<Token>& tokens) {
 		// Numbers
 		else if (isNumeric(c) || (c == '.' && lexIndex + 1 < length && isNumeric(src[lexIndex + 1]))) {
 			tempt = LITERAL_INTEGER;
+			tempb = false;
 			if (c == '0' && lexIndex + 1 < length && src[lexIndex + 1] == 'x') {
-				next(src, length, lexIndex, c);
+				next(src, length, lexIndex, c); // Skip 'x' in hex numbers (0x...)
 			}
 
 			while (true) {
@@ -89,9 +90,9 @@ void tokenize(string src, vector<Token>& tokens) {
 				}
 
 				if (c == '.') {
-					if (tempt == LITERAL_FLOATING_POINT) {
+					if (tempt == LITERAL_FLOATING_POINT && !tempb) {
 						logCompiler(ERROR, "too many decimal points in number", makeErrorToken());
-						break;
+						tempb = true;
 					}
 
 					tempt = LITERAL_FLOATING_POINT;

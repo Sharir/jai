@@ -26,11 +26,18 @@ stack<string> gFilesBeingCompiled;
 vector<CompiledFile*> gFiles;
 
 void compileFile(string name) {
+	for (const CompiledFile* otherCf : gFiles) {
+		// Requires proper path based comparison
+		if (otherCf->name == name) {
+			return;
+		}
+	}
+
 	gFilesBeingCompiled.push(name);
 
 	char* file = readFile(name); // Reading from the source file
 	if (!file) {
-		logCompiler(ERROR, ("couldn't read file '" + name + "'").c_str());
+		logCompiler(ERROR, "couldn't read file");
 		exit(1);
 	}
 
@@ -41,9 +48,14 @@ void compileFile(string name) {
 
 	vector<Token> tokens;
 	tokenize(cf->src, tokens); // Lexer - converting the source file into tokens - keywords, identifiers, operators etc.
-	if (gFatalError) exit(1);
+	if (gFatalError) return;
 
-	printTokens(tokens);
+	// printTokens(tokens);
+
+	TokenNode* parsed = parseSyntax(tokens);
+	if (gFatalError) return;
+
+	parsed++; // Just so the compiler shuts up about unused variable
 
 	// How I imagine the compiler pipeline right now:
 
@@ -85,12 +97,16 @@ void logCompiler(LogLevel level, const char* msg, Token* token) {
 			break;
 	}
 
+	string filename = gFilesBeingCompiled.top();
+	if (filename.empty()) {
+		filename = "jai";
+	}
+
 	if (token) {
-		string filename = gFilesBeingCompiled.top();
 		printf("%s:%d:%d %s: %s\n", filename.c_str(), token->line, token->col, levelString, msg);
 		printSrcLineSegment(filename, token->line, token->col);
 	} else {
-		printf("jai: %s: %s\n", levelString, msg);
+		printf("%s: %s: %s\n", filename.c_str(), levelString, msg);
 	}
 }
 

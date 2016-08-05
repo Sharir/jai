@@ -1,0 +1,55 @@
+# e stands for epsilon, as in, nothing
+# Does c++ have by-reference pointers? If so, what's the point really?
+
+Start ->                <Imports> <NoContext>
+Imports ->              DIR_IMPORT LITERAL_STRING <Imports> | e
+
+NoContext ->            KW_NAMESPACE <NamespaceDecl> |
+                        IDENTIFIER <GenericDecl> |
+                        DIR_RUN <DirRun> |
+                        DIR_USE <DirUse>
+GenericDecl ->          DOUBLE_COLON <StructOrFuncDecl> |
+                        <VarDecl>
+
+NamespaceDecl ->        <NamespaceName> BRACKET_LEFT <NoContext> BRACKET_RIGHT
+NamespaceName ->        IDENTIFIER DOUBLE_COLON <NamespaceName> |
+                        IDENTIFIER
+
+Type ->                 <BaseType> <TypeMod>
+TypeAllowRef ->         <BaseType> <TypeModAllowRef>
+BaseType ->             BT_INT8 | BT_INT16 | BT_INT32 | BT_INT64 |
+                        BT_UINT8 | BT_UINT16 | BT_UINT32 | BT_UINT64 |
+                        BT_FLOAT | BT_DOUBLE | BT_BOOL | BT_CHAR | BT_STRING | BT_VOID |
+                        <TypeId>
+TypeId ->               IDENTIFIER DOUBLE_COLON <TypeId> |             # Identical to NamespaceName, but different errors and different meaning
+                        IDENTIFIER
+TypeMod ->              OP_BIN_MUL <TypeMod> |
+                        SQUARE_BRACKET_LEFT SQUARE_BRACKET_RIGHT <TypeMod> |
+                        e
+TypeModAllowRef ->      OP_BIN_BITWISE_AND |
+                        <TypeMod>
+
+StructOrFuncDecl ->     KW_STRUCT <StructDecl> |
+                        <FuncDecl>
+
+StructDecl ->           <structParams> BRACKET_LEFT <StructContext> BRACKET_RIGHT
+StructParams ->         PAREN_LEFT <FuncArgsDecl> PAREN_RIGHT | e
+
+FuncDecl ->             PAREN_LEFT <FuncArgsDecl> PAREN_RIGHT <FuncRetDecl> BRACKET_LEFT <FuncContext> BRACKET_RIGHT
+FuncArgsDecl ->         IDENTIFIER OP_DECLARATION <TypeAllowRef> <AnotherFuncArg>
+AnotherFuncArg ->       COMMA <FuncArgsDecl> | e
+FuncRetDecl ->          OP_DECLARATION <Type> <AnotherFuncRet> | e
+AnotherFuncRet ->       COMMA <Type> <AnotherFuncRet> | e
+
+VarDecl ->              OP_DECLARATION <Type> <VarDeclInit> <VarDeclSuffix> |
+                        OP_INFERENCE <Expression> <VarDeclSuffix>
+VarDeclInit ->          OP_ASSIGN <Expression> | e
+VarDeclSuffix ->        COMMA IDENTIFIER <VarDecl> |
+                        SEMICOLON
+
+
+StructContext ->        e
+
+FuncContext ->          e
+
+Expression ->           e
