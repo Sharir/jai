@@ -73,7 +73,9 @@ bool next() {
 }
 
 void prev() {
-	t = tokens[--index];
+	if (--index >= 0) {
+		t = tokens[index];
+	}
 }
 
 TokenNode* makeNode() {
