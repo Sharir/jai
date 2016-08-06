@@ -1,3 +1,5 @@
+#import "io"
+
 node :: struct {
 	left!: node*;
 	right!: node*;

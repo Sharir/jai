@@ -219,13 +219,15 @@ void tokenize(string src, vector<Token>& tokens) {
 				tokens.push_back(makeToken(OP_UNI_INCREMENT, empty));
 			}
 		} else if (c == '-') {
-			if (!next(src, length, lexIndex, c) || (c != '-' && c != '=')) {
+			if (!next(src, length, lexIndex, c) || (c != '-' && c != '=' && c != '>')) {
 				tokens.push_back(makeToken(OP_BIN_SUB, empty));
 				prev(src, length, lexIndex, c);
 			} else if (c == '=') {
 				tokens.push_back(makeToken(OP_SUB_ASSIGN, empty));
 			} else if (c == '-') {
 				tokens.push_back(makeToken(OP_UNI_DECREMENT, empty));
+			} else if (c == '>') {
+				tokens.push_back(makeToken(OP_FUNC_RET, empty));
 			}
 		}
 

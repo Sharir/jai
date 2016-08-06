@@ -12,6 +12,9 @@
 using namespace std;
 
 void printTokens(vector<Token>&);
+const char* tokenTypeStr(TokenType);
+void printTree(const TokenNode*, int = 0);
+
 void printSrcLineSegment(string&, int, int);
 
 struct CompiledFile {
@@ -55,7 +58,9 @@ void compileFile(string name) {
 	TokenNode* parsed = parseSyntax(tokens);
 	if (gFatalError) return;
 
-	parsed++; // Just so the compiler shuts up about unused variable
+	printTree(parsed);
+
+	gFilesBeingCompiled.pop();
 
 	// How I imagine the compiler pipeline right now:
 
@@ -63,9 +68,9 @@ void compileFile(string name) {
 
 	// Collect symbols - lex, parse, extract symbols from tree [ namespaces, functions, structs, globals ]
 
-	// Preprocess - imports, ?macros?, other directives
+	// Preprocess - imports, other directives
 	// Last part of preprocessor - #run - may add new source - consider if feasible and preferrable to add directly
-	// to fully lexed and parsed, instead of to source, and then invoking lexer and parser again
+	// to fully lexed and parsed tree, instead of to source, and then invoking lexer and parser again
 	// If (probably preferrable) adding directly to tree, bear in mind to make some flag that a token is a product
 	// of #run, for compiler logging purposes. Line and col should probably be those of the #run directive itself
 
@@ -173,5 +178,129 @@ void printSrcLineSegment(string& name, int line, int col) {
 void printTokens(vector<Token>& tokens) {
 	for (const Token& t : tokens) {
 		printf("Token { type: %d\t\tline: %d\t\tcol: %d\t\tlexeme: '%s' }\n", t.type, t.line, t.col, t.lexeme.c_str());
+	}
+}
+
+const char* tokenTypeStr(TokenType t) {
+	switch (t) {
+		case UNKNOWN: return "UNKNOWN";
+		case WHITESPACE: return "WHITESPACE";
+		case LITERAL_INTEGER: return "LITERAL_INTEGER";
+		case LITERAL_FLOATING_POINT: return "LITERAL_FLOATING_POINT";
+		case LITERAL_CHARACTER: return "LITERAL_CHARACTER";
+		case LITERAL_STRING: return "LITERAL_STRING";
+		case PAREN_LEFT: return "PAREN_LEFT";
+		case PAREN_RIGHT: return "PAREN_RIGHT";
+		case BRACKET_LEFT: return "BRACKET_LEFT";
+		case BRACKET_RIGHT: return "BRACKET_RIGHT";
+		case SQUARE_BRACKET_LEFT: return "SQUARE_BRACKET_LEFT";
+		case SQUARE_BRACKET_RIGHT: return "SQUARE_BRACKET_RIGHT";
+		case ANGLE_BRACKET_LEFT: return "ANGLE_BRACKET_LEFT";
+		case ANGLE_BRACKET_RIGHT: return "ANGLE_BRACKET_RIGHT";
+		case COMMA: return "COMMA";
+		case SEMICOLON: return "SEMICOLON";
+		case DOUBLE_COLON: return "DOUBLE_COLON";
+		case IDENTIFIER: return "IDENTIFIER";
+		case OP_DECLARATION: return "OP_DECLARATION";
+		case OP_INFERENCE: return "OP_INFERENCE";
+		case OP_FUNC_DECLARATION: return "OP_FUNC_DECLARATION";
+		case OP_STRUCT_DECLARATION: return "OP_STRUCT_DECLARATION";
+		case OP_FUNC_RET: return "OP_FUNC_RET";
+		case OP_BIN_ADD: return "OP_BIN_ADD";
+		case OP_BIN_SUB: return "OP_BIN_SUB";
+		case OP_BIN_MUL: return "OP_BIN_MUL";
+		case OP_BIN_DIV: return "OP_BIN_DIV";
+		case OP_BIN_MOD: return "OP_BIN_MOD";
+		case OP_BIN_BITWISE_XOR: return "OP_BIN_BITWISE_XOR";
+		case OP_BIN_BITWISE_AND: return "OP_BIN_BITWISE_AND";
+		case OP_BIN_BITWISE_OR: return "OP_BIN_BITWISE_OR";
+		case OP_BIN_BITWISE_SHIFT_LEFT: return "OP_BIN_BITWISE_SHIFT_LEFT";
+		case OP_BIN_BITWISE_SHIFT_RIGHT: return "OP_BIN_BITWISE_SHIFT_RIGHT";
+		case OP_BIN_LOGICAL_AND: return "OP_BIN_LOGICAL_AND";
+		case OP_BIN_LOGICAL_OR: return "OP_BIN_LOGICAL_OR";
+		case OP_BIN_EQUALS: return "OP_BIN_EQUALS";
+		case OP_BIN_NOT_EQUALS: return "OP_BIN_NOT_EQUALS";
+		case OP_BIN_LESS: return "OP_BIN_LESS";
+		case OP_BIN_LESS_EQUAL: return "OP_BIN_LESS_EQUAL";
+		case OP_BIN_GREATER: return "OP_BIN_GREATER";
+		case OP_BIN_GREATER_EQUAL: return "OP_BIN_GREATER_EQUAL";
+		case OP_ASSIGN: return "OP_ASSIGN";
+		case OP_ADD_ASSIGN: return "OP_ADD_ASSIGN";
+		case OP_SUB_ASSIGN: return "OP_SUB_ASSIGN";
+		case OP_MUL_ASSIGN: return "OP_MUL_ASSIGN";
+		case OP_DIV_ASSIGN: return "OP_DIV_ASSIGN";
+		case OP_MOD_ASSIGN: return "OP_MOD_ASSIGN";
+		case OP_XOR_ASSIGN: return "OP_XOR_ASSIGN";
+		case OP_AND_ASSIGN: return "OP_AND_ASSIGN";
+		case OP_OR_ASSIGN: return "OP_OR_ASSIGN";
+		case OP_SHIFT_LEFT_ASSIGN: return "OP_SHIFT_LEFT_ASSIGN";
+		case OP_SHIFT_RIGHT_ASSIGN: return "OP_SHIFT_RIGHT_ASSIGN";
+		case OP_TERNARY_QUESTION: return "OP_TERNARY_QUESTION";
+		case OP_TERNARY_COLON: return "OP_TERNARY_COLON";
+		case OP_UNI_INCREMENT: return "OP_UNI_INCREMENT";
+		case OP_UNI_DECREMENT: return "OP_UNI_DECREMENT";
+		case OP_UNI_NOT: return "OP_UNI_NOT";
+		case OP_UNI_BITWISE_NOT: return "OP_UNI_BITWISE_NOT";
+		case OP_ADDRESS: return "OP_ADDRESS";
+		case OP_PTR: return "OP_PTR";
+		case OP_MEMBER_ACCESS: return "OP_MEMBER_ACCESS";
+		// case OP_PTR_MEMBER_ACCESS: return "OP_PTR_MEMBER_ACCESS";
+		case KW_BREAK: return "KW_BREAK";
+		case KW_CASE: return "KW_CASE";
+		case KW_CAST: return "KW_CAST";
+		case KW_CONST: return "KW_CONST";
+		case KW_CONTINUE: return "KW_CONTINUE";
+		case KW_DEFAULT: return "KW_DEFAULT";
+		case KW_DELETE: return "KW_DELETE";
+		case KW_ELSE: return "KW_ELSE";
+		case KW_ENUM: return "KW_ENUM";
+		case KW_FALSE: return "KW_FALSE";
+		case KW_FOR: return "KW_FOR";
+		case KW_IF: return "KW_IF";
+		case KW_NAMESPACE: return "KW_NAMESPACE";
+		case KW_NEW: return "KW_NEW";
+		case KW_NULL: return "KW_NULL";
+		case KW_RETURN: return "KW_RETURN";
+		case KW_SIZEOF: return "KW_SIZEOF";
+		case KW_SOA: return "KW_SOA";
+		case KW_STRUCT: return "KW_STRUCT";
+		case KW_SWITCH: return "KW_SWITCH";
+		// case KW_THIS: return "KW_THIS";
+		case KW_TRUE: return "KW_TRUE";
+		case KW_WHILE: return "KW_WHILE";
+		case BT_INT8: return "BT_INT8";
+		case BT_INT16: return "BT_INT16";
+		case BT_INT32: return "BT_INT32";
+		case BT_INT64: return "BT_INT64";
+		case BT_UINT8: return "BT_UINT8";
+		case BT_UINT16: return "BT_UINT16";
+		case BT_UINT32: return "BT_UINT32";
+		case BT_UINT64: return "BT_UINT64";
+		case BT_FLOAT: return "BT_FLOAT";
+		case BT_DOUBLE: return "BT_DOUBLE";
+		case BT_BOOL: return "BT_BOOL";
+		case BT_CHAR: return "BT_CHAR";
+		case BT_STRING: return "BT_STRING";
+		case BT_VOID: return "BT_VOID";
+		// case BT_ANY: return "BT_ANY";
+		case DIR_IMPORT: return "DIR_IMPORT";
+		case DIR_RUN: return "DIR_RUN";
+		case DIR_USE: return "DIR_USE";
+		case ROOT: return "ROOT";
+		case NO_CONTEXT: return "NO_CONTEXT";
+	}
+
+	return NULL;
+}
+
+void printTree(const TokenNode* tree, int depth) {
+	for (int i = 0; i < depth; ++i) {
+		printf("\t");
+	}
+
+	printf("%s    '%s'\n", tokenTypeStr(tree->data.type), tree->data.lexeme.c_str());
+
+	for (const TokenNode* child : tree->children) {
+		printTree(child, depth + 1);
 	}
 }

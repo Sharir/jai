@@ -34,6 +34,7 @@ enum TokenType {
 	OP_INFERENCE                ,	// :=
 	OP_FUNC_DECLARATION         , // :: - main :: () {}
 	OP_STRUCT_DECLARATION       , // :: - type :: struct {}
+	OP_FUNC_RET                 ,	// ->
 
 	OP_BIN_ADD                  ,	// +
 	OP_BIN_SUB                  ,	// -
@@ -77,7 +78,7 @@ enum TokenType {
 	OP_UNI_BITWISE_NOT          ,	// ~
 
 	OP_ADDRESS                  ,	// &
-	OP_DEREFERENCE              ,	// *
+	OP_PTR                      ,	// *
 	OP_MEMBER_ACCESS            ,	// .
 	// OP_PTR_MEMBER_ACCESS         ,	// -> ? Not sure if we want this or prefer implicit pointer dereference
 
@@ -132,6 +133,11 @@ enum TokenType {
 	DIR_IMPORT                  ,	// #import
 	DIR_RUN                     ,	// #run
 	DIR_USE                     ,	// #use
+
+
+	// Meta types to aid the parser
+	ROOT,
+	NO_CONTEXT
 };
 
 typedef struct {
