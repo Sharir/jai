@@ -1,5 +1,6 @@
 #include <string>
 #include <vector>
+#include "compiler.h"
 #include "token.h"
 #include "utils.h"
 
@@ -8,20 +9,17 @@ using namespace std;
 /*
 
 TODO:
-- Add binary, octal and hex integer literals (consider floats)
-- Add token line and col indices
-
-- Tell off Tzah for:
-	- Including stuff in the header file instead of the source file (algorithm in preproc)
-	- Putting "private" function declarations in the header file (count_occurrences, prepare - in preproc)
-	- Explicitly using cpp iterators - much better to use builtin syntax or managed functions
+- Remove multi-character character constant support
 
 */
 
-string empty("");
+const string empty("");
 
-Token makeToken(TokenType, string, int = -1, int = -1);
-bool safeGetNext(string&, int, int&, char&);
+Token makeToken(TokenType, string);
+Token* makeErrorToken();
+
+bool next(string&, int, int&, char&);
+void prev(string&, int, int&, char&);
 bool allowedFirstIdChar(char);
 bool allowedIdChar(char);
 
@@ -31,7 +29,13 @@ TokenType getKwBtId(string);
 int gLine;
 int gCol;
 
+int gCurLine;
+int gCurCol;
+
 void tokenize(string src, vector<Token>& tokens) {
+	gLine = 1;
+	gCol = 0; // Col starts at 1, but same as lexIndex initialization to -1: next increments them both at the start
+
 	int lexIndex = -1;
 	int tokenStart;
 	int length = src.length();
@@ -41,27 +45,29 @@ void tokenize(string src, vector<Token>& tokens) {
 	string temps;
 	TokenType tempt;
 
-	while (safeGetNext(src, length, lexIndex, c)) {
+	while (next(src, length, lexIndex, c)) {
 		tokenStart = lexIndex;
+		gCurLine = gLine;
+		gCurCol = gCol;
 
 		// Whitespaces
 		if (isWhitespace(c)) {
-			while (safeGetNext(src, length, lexIndex, c) && isWhitespace(c));
-			--lexIndex;
+			while (next(src, length, lexIndex, c) && isWhitespace(c));
+			prev(src, length, lexIndex, c);
 		}
 
 		// Both types of comments
 		else if (c == '/' && lexIndex + 1 < length && (src[lexIndex + 1] == '/' || src[lexIndex + 1] == '*')) {
-			safeGetNext(src, length, lexIndex, c); // We already explicitly checked above and know it's safe
+			next(src, length, lexIndex, c); // We already explicitly checked above and know it's safe
 			if (c == '/') {
-				while (safeGetNext(src, length, lexIndex, c) && !isNewline(c));
+				while (next(src, length, lexIndex, c) && !isNewline(c));
 			} else { // We can only enter this if the next char was '/' or '*', so we know for certain this else means "/*"
 				tokenStart = 1; // Using tokenStart as a temp integer
 				tempb = false;
-				while (safeGetNext(src, length, lexIndex, c)) {
-					if (c == '/' && safeGetNext(src, length, lexIndex, c) && c == '*') {
+				while (next(src, length, lexIndex, c)) {
+					if (c == '/' && next(src, length, lexIndex, c) && c == '*') {
 						++tokenStart;
-					} else if (c == '*' && safeGetNext(src, length, lexIndex, c) && c == '/') {
+					} else if (c == '*' && next(src, length, lexIndex, c) && c == '/') {
 						if (--tokenStart <= 0) break;
 					}
 				}
@@ -69,23 +75,27 @@ void tokenize(string src, vector<Token>& tokens) {
 		}
 
 		// Numbers
-		else if (isNumeric(c)) {
+		else if (isNumeric(c) || (c == '.' && lexIndex + 1 < length && isNumeric(src[lexIndex + 1]))) {
+			tempt = LITERAL_INTEGER;
 			tempb = false;
+			if (c == '0' && lexIndex + 1 < length && src[lexIndex + 1] == 'x') {
+				next(src, length, lexIndex, c); // Skip 'x' in hex numbers (0x...)
+			}
+
 			while (true) {
-				if (!safeGetNext(src, length, lexIndex, c)) return;
-				if (isNewline(c)) return;
+				if (!next(src, length, lexIndex, c) || (!isNumeric(c) && c != '.')) {
+					if (!isAlphabetical(c)) prev(src, length, lexIndex, c); // Allows literal suffixes like f for floats
+					tokens.push_back(makeToken(tempt, src.substr(tokenStart, lexIndex - tokenStart + 1)));
+					break;
+				}
 
 				if (c == '.') {
-					if (tempb) {
-						printf("Syntax Error: too many decimal points in number\n");
-						break;
+					if (tempt == LITERAL_FLOATING_POINT && !tempb) {
+						logCompiler(ERROR, "too many decimal points in number", makeErrorToken());
+						tempb = true;
 					}
 
-					tempb = true;
-				} else if (!isNumeric(c)) {
-					if (!isAlphabetical(c)) --lexIndex; // Allows literal suffixes like f for floats
-					tokens.push_back(makeToken(tempb ? LITERAL_FLOATING_POINT : LITERAL_INTEGER, src.substr(tokenStart, lexIndex - tokenStart + 1)));
-					break;
+					tempt = LITERAL_FLOATING_POINT;
 				}
 			}
 		}
@@ -94,13 +104,8 @@ void tokenize(string src, vector<Token>& tokens) {
 		else if (c == '\'') {
 			tempb = false;
 			while (true) {
-				if (!safeGetNext(src, length, lexIndex, c)) {
-					printf("Syntax Error: unterminated character literal\n");
-					return;
-				}
-
-				if (isNewline(c)) {
-					printf("Syntax Error: unterminated character literal\n");
+				if (!next(src, length, lexIndex, c) || isNewline(c)) {
+					logCompiler(ERROR, "unterminated character literal", makeErrorToken());
 					break;
 				}
 
@@ -120,14 +125,14 @@ void tokenize(string src, vector<Token>& tokens) {
 			tempb = false;
 			temps = "";
 			while (true) {
-				if (!safeGetNext(src, length, lexIndex, c)) {
-					printf("Syntax Error: unterminated string\n");
+				if (!next(src, length, lexIndex, c)) {
+					logCompiler(ERROR, "unterminated string", makeErrorToken());
 					return;
 				}
 
 				if (isNewline(c)) {
 					// Once we hit a newline char (\n or \r), we negate any whitespace that follows to allow arbitrary indentation, including space indents (not just tab indents)
-					while (safeGetNext(src, length, lexIndex, c) && isWhitespace(c));
+					while (next(src, length, lexIndex, c) && isNewline(c));
 				}
 
 				if (c == '\\' && !tempb) {
@@ -158,31 +163,31 @@ void tokenize(string src, vector<Token>& tokens) {
 		}
 
 		else if (c == '<') {
-			if (!safeGetNext(src, length, lexIndex, c) || (c != '<' && c != '=')) {
+			if (!next(src, length, lexIndex, c) || (c != '<' && c != '=')) {
 				tokens.push_back(makeToken(ANGLE_BRACKET_LEFT, empty));
-				--lexIndex;
+				prev(src, length, lexIndex, c);
 			} else if (c == '=') {
 				tokens.push_back(makeToken(OP_BIN_LESS_EQUAL, empty));
 			} else if (c == '<') {
-				if (safeGetNext(src, length, lexIndex, c) && c == '=') {
+				if (next(src, length, lexIndex, c) && c == '=') {
 					tokens.push_back(makeToken(OP_SHIFT_LEFT_ASSIGN, empty));
 				} else {
 					tokens.push_back(makeToken(OP_BIN_BITWISE_SHIFT_LEFT, empty));
-					--lexIndex;
+					prev(src, length, lexIndex, c);
 				}
 			}
 		} else if (c == '>') {
-			if (!safeGetNext(src, length, lexIndex, c) || (c != '>' && c != '=')) {
+			if (!next(src, length, lexIndex, c) || (c != '>' && c != '=')) {
 				tokens.push_back(makeToken(ANGLE_BRACKET_RIGHT, empty));
-				--lexIndex;
+				prev(src, length, lexIndex, c);
 			} else if (c == '=') {
 				tokens.push_back(makeToken(OP_BIN_GREATER_EQUAL, empty));
 			} else if (c == '>') {
-				if (safeGetNext(src, length, lexIndex, c) && c == '=') {
+				if (next(src, length, lexIndex, c) && c == '=') {
 					tokens.push_back(makeToken(OP_SHIFT_RIGHT_ASSIGN, empty));
 				} else {
 					tokens.push_back(makeToken(OP_BIN_BITWISE_SHIFT_RIGHT, empty));
-					--lexIndex;
+					prev(src, length, lexIndex, c);
 				}
 			}
 		}
@@ -194,9 +199,9 @@ void tokenize(string src, vector<Token>& tokens) {
 		}
 
 		else if (c == ':') {
-			if (!safeGetNext(src, length, lexIndex, c) || (c != ':' && c != '=')) {
+			if (!next(src, length, lexIndex, c) || (c != ':' && c != '=')) {
 				tokens.push_back(makeToken(OP_DECLARATION, empty));
-				--lexIndex;
+				prev(src, length, lexIndex, c);
 			} else if (c == '=') {
 				tokens.push_back(makeToken(OP_INFERENCE, empty));
 			} else if (c == ':') {
@@ -205,68 +210,70 @@ void tokenize(string src, vector<Token>& tokens) {
 		}
 
 		else if (c == '+') {
-			if (!safeGetNext(src, length, lexIndex, c) || (c != '+' && c != '=')) {
+			if (!next(src, length, lexIndex, c) || (c != '+' && c != '=')) {
 				tokens.push_back(makeToken(OP_BIN_ADD, empty));
-				--lexIndex;
+				prev(src, length, lexIndex, c);
 			} else if (c == '=') {
 				tokens.push_back(makeToken(OP_ADD_ASSIGN, empty));
 			} else if (c == '+') {
 				tokens.push_back(makeToken(OP_UNI_INCREMENT, empty));
 			}
 		} else if (c == '-') {
-			if (!safeGetNext(src, length, lexIndex, c) || (c != '-' && c != '=')) {
+			if (!next(src, length, lexIndex, c) || (c != '-' && c != '=' && c != '>')) {
 				tokens.push_back(makeToken(OP_BIN_SUB, empty));
-				--lexIndex;
+				prev(src, length, lexIndex, c);
 			} else if (c == '=') {
 				tokens.push_back(makeToken(OP_SUB_ASSIGN, empty));
 			} else if (c == '-') {
 				tokens.push_back(makeToken(OP_UNI_DECREMENT, empty));
+			} else if (c == '>') {
+				tokens.push_back(makeToken(OP_FUNC_RET, empty));
 			}
 		}
 
 		else if (c == '*') {
-			if (!safeGetNext(src, length, lexIndex, c) || c != '=') {
+			if (!next(src, length, lexIndex, c) || c != '=') {
 				tokens.push_back(makeToken(OP_BIN_MUL, empty));
-				--lexIndex;
+				prev(src, length, lexIndex, c);
 			} else {
 				tokens.push_back(makeToken(OP_MUL_ASSIGN, empty));
 			}
 		} else if (c == '/') {
-			if (!safeGetNext(src, length, lexIndex, c) || c != '=') {
+			if (!next(src, length, lexIndex, c) || c != '=') {
 				tokens.push_back(makeToken(OP_BIN_DIV, empty));
-				--lexIndex;
+				prev(src, length, lexIndex, c);
 			} else {
 				tokens.push_back(makeToken(OP_DIV_ASSIGN, empty));
 			}
 		} else if (c == '%') {
-			if (!safeGetNext(src, length, lexIndex, c) || c != '=') {
+			if (!next(src, length, lexIndex, c) || c != '=') {
 				tokens.push_back(makeToken(OP_BIN_MOD, empty));
-				--lexIndex;
+				prev(src, length, lexIndex, c);
 			} else {
 				tokens.push_back(makeToken(OP_MOD_ASSIGN, empty));
 			}
 		} else if (c == '^') {
-			if (!safeGetNext(src, length, lexIndex, c) || c != '=') {
+			if (!next(src, length, lexIndex, c) || c != '=') {
 				tokens.push_back(makeToken(OP_BIN_BITWISE_XOR, empty));
-				--lexIndex;
+				prev(src, length, lexIndex, c);
 			} else {
 				tokens.push_back(makeToken(OP_XOR_ASSIGN, empty));
 			}
 		}
 
 		else if (c == '&') {
-			if (!safeGetNext(src, length, lexIndex, c) || (c != '&' && c != '=')) {
+			if (!next(src, length, lexIndex, c) || (c != '&' && c != '=')) {
 				tokens.push_back(makeToken(OP_BIN_BITWISE_AND, empty));
-				--lexIndex;
+				prev(src, length, lexIndex, c);
 			} else if (c == '=') {
 				tokens.push_back(makeToken(OP_AND_ASSIGN, empty));
 			} else if (c == '&') {
 				tokens.push_back(makeToken(OP_BIN_LOGICAL_AND, empty));
 			}
 		} else if (c == '|') {
-			if (!safeGetNext(src, length, lexIndex, c) || (c != '|' && c != '=')) {
+			if (!next(src, length, lexIndex, c) || (c != '|' && c != '=')) {
 				tokens.push_back(makeToken(OP_BIN_BITWISE_OR, empty));
-				--lexIndex;
+				prev(src, length, lexIndex, c);
 			} else if (c == '=') {
 				tokens.push_back(makeToken(OP_OR_ASSIGN, empty));
 			} else if (c == '|') {
@@ -275,16 +282,16 @@ void tokenize(string src, vector<Token>& tokens) {
 		}
 
 		else if (c == '=') {
-			if (!safeGetNext(src, length, lexIndex, c) || c != '=') {
+			if (!next(src, length, lexIndex, c) || c != '=') {
 				tokens.push_back(makeToken(OP_ASSIGN, empty));
-				--lexIndex;
+				prev(src, length, lexIndex, c);
 			} else {
 				tokens.push_back(makeToken(OP_BIN_EQUALS, empty));
 			}
 		} else if (c == '!') {
-			if (!safeGetNext(src, length, lexIndex, c) || c != '=') {
+			if (!next(src, length, lexIndex, c) || c != '=') {
 				tokens.push_back(makeToken(OP_UNI_NOT, empty));
-				--lexIndex;
+				prev(src, length, lexIndex, c);
 			} else {
 				tokens.push_back(makeToken(OP_BIN_NOT_EQUALS, empty));
 			}
@@ -300,15 +307,15 @@ void tokenize(string src, vector<Token>& tokens) {
 
 		// Directives
 		else if (c == '#') {
-			while (safeGetNext(src, length, lexIndex, c) && allowedIdChar(c));
-			--lexIndex;
+			while (next(src, length, lexIndex, c) && allowedIdChar(c));
+			prev(src, length, lexIndex, c);
 			if (lexIndex == tokenStart) {
-				printf("Syntax Error: empty directive not allowed\n");
+				logCompiler(WARN, "empty directive does nothing", makeErrorToken());
 			} else {
 				temps = src.substr(tokenStart + 1, lexIndex - tokenStart);
 				tempt = getDirective(temps);
 				if (tempt == UNKNOWN) {
-					printf("Syntax Error: unknown directive '#%s'\n", temps.c_str());
+					logCompiler(WARN, ("unknown directive '#" + temps + "'").c_str(), makeErrorToken());
 				} else {
 					tokens.push_back(makeToken(tempt, empty));
 				}
@@ -317,9 +324,9 @@ void tokenize(string src, vector<Token>& tokens) {
 
 		// Keywords, builtin types, identifiers
 		else if (allowedFirstIdChar(c)) {
-			while (safeGetNext(src, length, lexIndex, c) && allowedIdChar(c));
+			while (next(src, length, lexIndex, c) && allowedIdChar(c));
 			temps = src.substr(tokenStart, lexIndex - tokenStart);
-			--lexIndex;
+			prev(src, length, lexIndex, c);
 			tempt = getKwBtId(temps);
 			if (tempt == IDENTIFIER) {
 				tokens.push_back(makeToken(tempt, temps));
@@ -329,26 +336,55 @@ void tokenize(string src, vector<Token>& tokens) {
 		}
 
 		else {
-			printf("Syntax Error: unexpected symbol '%c'\n", c);
+			logCompiler(ERROR, (string("unexpected symbol '") + c + "'").c_str(), makeErrorToken());
 		}
 	}
 }
 
-Token makeToken(TokenType t, string s, int line, int col) {
+Token makeToken(TokenType t, string s) {
 	Token token;
 	token.type = t;
 	token.lexeme = s;
-	token.line = line < 0 ? gLine : line;
-	token.col = col < 0 ? gCol : col;
+	token.line = gCurLine;
+	token.col = gCurCol;
 	return token;
 }
 
-bool safeGetNext(string& data, int length, int& index, char& c) {
+Token errorToken = makeToken(UNKNOWN, empty);
+Token* makeErrorToken() {
+	errorToken.line = gCurLine;
+	errorToken.col = gCurCol;
+	return &errorToken;
+}
+
+bool next(string& data, int length, int& index, char& c) {
 	if (++index < length) {
 		c = data[index];
+
+		if (c == '\n') { // Only \n, since we don't need \r\n counting as two newlines
+			++gLine;
+			gCol = 0; // Line starts with col 1, just that the upcoming call to next will increment gCol to 1, reading the first character
+		} else {
+			++gCol;
+		}
+
 		return true;
 	}
 	return false;
+}
+
+void prev(string& data, int length, int& index, char& c) {
+	// Main use is to also decrement line and col globals appropriately to accomodate for look ahead calls to next
+	if (c == '\n') {
+		// We should set gCol to 0, since next should be called right after a call to prev, incrementing gCol to 1,
+		// which is good, because it's the start of the line
+		--gLine;
+		gCol = 0;
+	} else {
+		--gCol;
+	}
+
+	c = data[--index];
 }
 
 bool allowedFirstIdChar(char c) {
@@ -362,6 +398,7 @@ bool allowedIdChar(char c) {
 TokenType getDirective(string s) {
 	if (s == "import") return DIR_IMPORT;
 	if (s == "run") return DIR_RUN;
+	if (s == "use") return DIR_USE;
 	return UNKNOWN;
 }
 
@@ -411,4 +448,3 @@ TokenType getKwBtId(string s) {
 	
 	return IDENTIFIER;
 }
-
