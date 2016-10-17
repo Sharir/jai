@@ -66,7 +66,7 @@ void compileFile(string name) {
 
 	// Read file
 
-	// Collect symbols - lex, parse, extract symbols from tree [ namespaces, functions, structs, globals ]
+	// Collect symbols - lex, parse, extract symbols from tree [ functions, structs, globals ]
 
 	// Preprocess - imports, other directives
 	// Last part of preprocessor - #run - may add new source - consider if feasible and preferrable to add directly
@@ -153,7 +153,7 @@ void printSrcLineSegment(string& name, int line, int col) {
 
 	// Now length is the actual length of the line segment
 	length = length - index;
-	if (length <= 0 || col <= 0 || col >= length) return;
+	if (length <= 0 || col <= 0 || col > length) return;
 
 	// Ensure no more than MAX_COL_MARGIN characters before and after the col position, for long lines
 	if (col > MAX_COL_MARGIN) {
@@ -244,7 +244,6 @@ const char* tokenTypeStr(TokenType t) {
 		case OP_ADDRESS: return "OP_ADDRESS";
 		case OP_PTR: return "OP_PTR";
 		case OP_MEMBER_ACCESS: return "OP_MEMBER_ACCESS";
-		// case OP_PTR_MEMBER_ACCESS: return "OP_PTR_MEMBER_ACCESS";
 		case KW_BREAK: return "KW_BREAK";
 		case KW_CASE: return "KW_CASE";
 		case KW_CAST: return "KW_CAST";
@@ -257,15 +256,15 @@ const char* tokenTypeStr(TokenType t) {
 		case KW_FALSE: return "KW_FALSE";
 		case KW_FOR: return "KW_FOR";
 		case KW_IF: return "KW_IF";
-		case KW_NAMESPACE: return "KW_NAMESPACE";
 		case KW_NEW: return "KW_NEW";
 		case KW_NULL: return "KW_NULL";
+		case KW_OLD: return "KW_OLD";
+		case KW_OPAQUE: return "KW_OPAQUE";
 		case KW_RETURN: return "KW_RETURN";
 		case KW_SIZEOF: return "KW_SIZEOF";
 		case KW_SOA: return "KW_SOA";
 		case KW_STRUCT: return "KW_STRUCT";
 		case KW_SWITCH: return "KW_SWITCH";
-		// case KW_THIS: return "KW_THIS";
 		case KW_TRUE: return "KW_TRUE";
 		case KW_WHILE: return "KW_WHILE";
 		case BT_INT8: return "BT_INT8";
@@ -282,12 +281,11 @@ const char* tokenTypeStr(TokenType t) {
 		case BT_CHAR: return "BT_CHAR";
 		case BT_STRING: return "BT_STRING";
 		case BT_VOID: return "BT_VOID";
-		// case BT_ANY: return "BT_ANY";
+		case DIR_EXPORT: return "DIR_EXPORT";
 		case DIR_IMPORT: return "DIR_IMPORT";
 		case DIR_RUN: return "DIR_RUN";
-		case DIR_USE: return "DIR_USE";
 		case ROOT: return "ROOT";
-		case NO_CONTEXT: return "NO_CONTEXT";
+		case LIST: return "LIST";
 	}
 
 	return NULL;

@@ -26,7 +26,7 @@ enum TokenType {
 
 	COMMA                       ,	// ,
 	SEMICOLON                   ,	// ;
-	DOUBLE_COLON                ,	// :: - access to namespaces and possibly static stuff
+	DOUBLE_COLON                ,	// :: - access to named imports
 	IDENTIFIER                  ,	// var/const/func/type name
 
 
@@ -80,7 +80,6 @@ enum TokenType {
 	OP_ADDRESS                  ,	// &
 	OP_PTR                      ,	// *
 	OP_MEMBER_ACCESS            ,	// .
-	// OP_PTR_MEMBER_ACCESS         ,	// -> ? Not sure if we want this or prefer implicit pointer dereference
 
 
 	KW_BREAK                    ,
@@ -91,19 +90,19 @@ enum TokenType {
 	KW_DEFAULT                  ,
 	KW_DELETE                   ,
 	KW_ELSE                     ,
-	KW_ENUM                     ,
+	KW_ENUM                     ,	// var
 	KW_FALSE                    ,
 	KW_FOR                      ,
 	KW_IF                       ,
-	KW_NAMESPACE                ,
 	KW_NEW                      ,
 	KW_NULL                     ,
+	KW_OLD                      ,
+	KW_OPAQUE                   ,	// var
 	KW_RETURN                   ,
 	KW_SIZEOF                   ,
-	KW_SOA                      ,
-	KW_STRUCT                   ,
+	KW_SOA                      ,	// var
+	KW_STRUCT                   ,	// var
 	KW_SWITCH                   ,
-	// KW_THIS                     , ? Not sure yet
 	KW_TRUE                     ,
 	KW_WHILE                    ,
 
@@ -126,18 +125,17 @@ enum TokenType {
 	BT_CHAR                     ,	// char
 	BT_STRING                   ,	// string
 	BT_VOID                     ,	// void
-	// BT_ANY                      ,	// any ? Not sure I like this concept
 
 
 	// Compiler (preprocessor) directives
+	DIR_EXPORT                  ,	// #export
 	DIR_IMPORT                  ,	// #import
 	DIR_RUN                     ,	// #run
-	DIR_USE                     ,	// #use
 
 
 	// Meta types to aid the parser
 	ROOT,
-	NO_CONTEXT
+	LIST,
 };
 
 typedef struct {

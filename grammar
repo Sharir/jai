@@ -2,60 +2,121 @@
 # * means (like regex) 0 or more
 
 Start ->                <Imports> <NoContext>
-Imports ->              DIR_IMPORT LITERAL_STRING <Imports> | e
+Imports ->              {DIR_IMPORT LITERAL_STRING}* | e
 
-NoContext ->            <NoContext>*
-NoContextItem ->        KW_NAMESPACE <NamespaceDecl> <NoContext> |
-                        IDENTIFIER <GenericDecl> <NoContext> |
-                        DIR_RUN <DirRun> <NoContext> |
-                        DIR_USE <DirUse> <NoContext> |
-                        e
+NoContext ->            <NoContextItem>*
+NoContextItem ->        IDENTIFIER <GenericDecl>
 GenericDecl ->          DOUBLE_COLON <StructOrFuncDecl> |
-                        <VarDecl>
+                        <VarDecl> SEMICOLON
 
-NamespaceDecl ->        <NamespaceName> BRACKET_LEFT <NoContext> BRACKET_RIGHT
-NamespaceName ->        IDENTIFIER DOUBLE_COLON <NamespaceName> |
-                        IDENTIFIER
+GenericArgumentList ->                   # SPECIAL CASE - {IDENTIFIER OP_DECLARATION <Type>}* separated by {COMMA}
 
-Type ->                 <BaseType> <TypeMod>
-TypeAllowRef ->         <Type> <TypeModRef>
-BaseType ->             BT_INT8 | BT_INT16 | BT_INT32 | BT_INT64 |
-                        BT_UINT8 | BT_UINT16 | BT_UINT32 | BT_UINT64 |
-                        BT_FLOAT | BT_DOUBLE | BT_BOOL | BT_CHAR | BT_STRING | BT_VOID |
-                        <TypeId>
-TypeId ->               IDENTIFIER DOUBLE_COLON <TypeId> |             # Identical to NamespaceName, but different errors and different meaning
-                        IDENTIFIER
-TypeMod ->              OP_BIN_MUL <TypeMod> |
-                        SQUARE_BRACKET_LEFT SQUARE_BRACKET_RIGHT <TypeMod> |
-####                        SQUARE_BRACKET_LEFT {..} SQUARE_BRACKET_RIGHT <TypeMod> |      # I don't know if I like this being a builtin type
-                        e
-TypeModRef ->           OP_BIN_BITWISE_AND | e
-
-StructOrFuncDecl ->     KW_STRUCT <StructDecl> |
+StructOrFuncDecl ->     KW_OPAQUE KW_STRUCT <StructDecl> |
+                        KW_STRUCT <StructDecl> |
                         <FuncDecl>
 
-StructDecl ->           <structParams> BRACKET_LEFT <StructContext> BRACKET_RIGHT
-StructParams ->         PAREN_LEFT <FuncArgsDecl> PAREN_RIGHT | e
+StructDecl ->           BRACKET_LEFT <StructContext> BRACKET_RIGHT
+StructContext ->        <StructContextItem>*
+StructContextItem ->    IDENTIFIER <StructContextDecl> |
+                        SQUARE_BRACKET_LEFT SQUARE_BRACKET_RIGHT <StructOperatorDecl> |
+                        <Operator> <StructOperatorDecl>
 
-FuncDecl ->             PAREN_LEFT <FuncArgsDecl> PAREN_RIGHT <FuncRetDecl> BRACKET_LEFT <FuncContext> BRACKET_RIGHT
-FuncArgsDecl ->         IDENTIFIER OP_DECLARATION <TypeAllowRef> <AnotherFuncArg>
-AnotherFuncArg ->       COMMA <FuncArgsDecl> | e
-FuncRetDecl ->          OP_DECLARATION <Type> <AnotherFuncRet> | e
+StructContextDecl ->    e
+
+StructOperatorDecl ->   e
+
+FuncDecl ->             PAREN_LEFT <GenericArgumentList> PAREN_RIGHT <FuncRetDecl> BRACKET_LEFT <FuncContext> BRACKET_RIGHT
+FuncRetDecl ->          OP_FUNC_RET <Type> <AnotherFuncRet> | e
 AnotherFuncRet ->       COMMA <Type> <AnotherFuncRet> | e
 
-VarDecl ->              OP_DECLARATION <Type> <VarDeclInit> <VarDeclSuffix> |
-                        OP_INFERENCE <Expression> <VarDeclSuffix>
+VarDecl ->              OP_DECLARATION <Type> <VarDeclInit> |
+                        OP_INFERENCE <Expression>
 VarDeclInit ->          OP_ASSIGN <Expression> | e
-VarDeclSuffix ->        COMMA IDENTIFIER <VarDecl> |
-                        SEMICOLON
-
-
-StructContext ->        <StructContextItem>*
-StructContextItem ->    e
 
 FuncContext ->          <FuncContextItem>*
 FuncContextItem ->      e
 
-Expression ->           e
+Type ->                 <BaseType> <TypeMod>
+BaseType ->             BT_INT8 | BT_INT16 | BT_INT32 | BT_INT64 |
+                        BT_UINT8 | BT_UINT16 | BT_UINT32 | BT_UINT64 |
+                        BT_FLOAT | BT_DOUBLE | BT_BOOL | BT_CHAR | BT_STRING | BT_VOID |
+                        <Symbol>
+TypeMod ->              OP_BIN_MUL <TypeMod> |
+                        SQUARE_BRACKET_LEFT SQUARE_BRACKET_RIGHT <TypeMod> |
+                        e
 
-Statement ->            e
+Symbol ->               IDENTIFIER DOUBLE_COLON <NamespacedSymbol> |
+                        IDENTIFIER
+
+Expression ->           <ExprAssign>
+ExprMultiple ->         <Expression> |
+                        <Expression> COMMA <ExprMultiple>
+ExprPrimary ->          LITERAL_INTEGER |
+                        LITERAL_FLOATING_POINT |
+                        LITERAL_CHARACTER |
+                        LITERAL_STRING |
+                        PAREN_LEFT <Expression> PAREN_RIGHT |
+                        <Symbol>
+ExprPostfix ->          <ExprPrimary> |
+                        <ExprPostfix> <PostFix>
+Postfix ->              SQUARE_BRACKET_LEFT <Expression> SQUARE_BRACKET_RIGHT |
+                        PAREN_LEFT PAREN_RIGHT |
+                        PAREN_LEFT <ExprMultiple> PAREN_RIGHT |
+                        OP_MEMBER_ACCESS IDENTIFIER |
+                        OP_UNI_INCREMENT |
+                        OP_UNI_DECREMENT
+ExprUnary ->            KW_SIZEOF PAREN_LEFT <Type> PAREN_RIGHT |
+                        <OpUnary> <ExprPostfix> |
+                        <ExprPostfix>
+OpUnary ->              OP_ADDRESS | OP_PTR | OP_BIN_ADD | OP_BIN_SUB |
+                        OP_UNI_INCREMENT | OP_UNI_DECREMENT | OP_UNI_NOT | OP_UNI_BITWISE_NOT
+ExprCast ->             PAREN_LEFT <Type> PAREN_RIGHT <ExprCast> |
+                        <ExprUnary>
+ExprArith1 ->           <ExprCast> OP_BIN_MUL <ExprArith1> |
+                        <ExprCast> OP_BIN_DIV <ExprArith1> |
+                        <ExprCast> OP_BIN_MOD <ExprArith1> |
+                        <ExprCast>
+ExprArith2 ->           <ExprArith1> OP_BIN_ADD <ExprArith2> |
+                        <ExprArith1> OP_BIN_SUB <ExprArith2> |
+                        <ExprArith1>
+ExprShift ->            <ExprArith2> OP_BIN_BITWISE_SHIFT_LEFT <ExprShift> |
+                        <ExprArith2> OP_BIN_BITWISE_SHIFT_RIGHT <ExprShift> |
+                        <ExprArith2>
+ExprAnd ->              <ExprShift> OP_BIN_BITWISE_AND <ExprAnd> |
+                        <ExprShift>
+ExprXor ->              <ExprAnd> OP_BIN_BITWISE_XOR <ExprXor> |
+                        <ExprAnd>
+ExprOr ->               <ExprXor> OP_BIN_BITWISE_OR <ExprOr> |
+                        <ExprXor>
+ExprComparison ->       <ExprOr> OP_BIN_LESS <ExprComparison> |
+                        <ExprOr> OP_BIN_GREATER <ExprComparison> |
+                        <ExprOr> OP_BIN_LESS_EQUAL <ExprComparison> |
+                        <ExprOr> OP_BIN_GREATER_EQUAL <ExprComparison> |
+                        <ExprOr> OP_BIN_EQUALS <ExprComparison> |
+                        <ExprOr> OP_BIN_NOT_EQUALS <ExprComparison> |
+                        <ExprOr>
+ExprLogicAnd ->         <ExprComparison> OP_BIN_LOGICAL_AND <ExprLogicAnd> |
+                        <ExprComparison>
+ExprLogicOr ->          <ExprLogicAnd> OP_BIN_LOGICAL_OR <ExprLogicOr> |
+                        <ExprLogicAnd>
+ExprTernary ->          <ExprLogicOr> OP_TERNARY_QUESTION <ExprTernary> OP_TERNARY_COLON <ExprTernary> |
+                        <ExprLogicOr>
+ExprAssign ->           <ExprTernary> <OpAssign> <ExprAssign> |
+                        <ExprTernary>
+OpAssign ->             OP_ASSIGN | OP_ADD_ASSIGN | OP_SUB_ASSIGN | OP_MUL_ASSIGN | OP_DIV_ASSIGN | OP_MOD_ASSIGN |
+                        OP_XOR_ASSIGN | OP_AND_ASSIGN | OP_OR_ASSIGN | OP_SHIFT_LEFT_ASSIGN | OP_SHIFT_RIGHT_ASSIGN
+
+OverloadableOps ->      e
+
+Operator ->             <BinaryOperator> | <UnaryOperatorPre>
+BinaryOperator ->       OP_BIN_ADD | OP_BIN_SUB | OP_BIN_MUL | OP_BIN_DIV | OP_BIN_MOD |
+                        OP_BIN_BITWISE_XOR | OP_BIN_BITWISE_AND | OP_BIN_BITWISE_OR |
+                        OP_BIN_BITWISE_SHIFT_LEFT | OP_BIN_BITWISE_SHIFT_RIGHT |
+                        OP_BIN_LOGICAL_AND | OP_BIN_LOGICAL_OR |
+                        OP_BIN_EQUALS | OP_BIN_NOT_EQUALS |
+                        OP_BIN_LESS | OP_BIN_LESS_EQUAL | OP_BIN_GREATER | OP_BIN_GREATER_EQUAL
+UnaryOperatorPre ->     OP_BIN_ADD | OP_BIN_SUB |
+                        OP_UNI_INCREMENT | OP_UNI_DECREMENT |
+                        OP_UNI_NOT | OP_UNI_BITWISE_NOT |
+                        OP_ADDRESS | OP_PTR
+UnaryOperatorPost ->    OP_UNI_INCREMENT | OP_UNI_DECREMENT

@@ -396,9 +396,9 @@ bool allowedIdChar(char c) {
 }
 
 TokenType getDirective(string s) {
+	if (s == "export") return DIR_EXPORT;
 	if (s == "import") return DIR_IMPORT;
 	if (s == "run") return DIR_RUN;
-	if (s == "use") return DIR_USE;
 	return UNKNOWN;
 }
 
@@ -420,7 +420,6 @@ TokenType getKwBtId(string s) {
 	if (s == "char") return BT_CHAR;
 	if (s == "string") return BT_STRING;
 	if (s == "void") return BT_VOID;
-	// if (s == "any") return BY_ANY;
 
 	if (s == "break") return KW_BREAK;
 	if (s == "case") return KW_CASE;
@@ -434,15 +433,15 @@ TokenType getKwBtId(string s) {
 	if (s == "false") return KW_FALSE;
 	if (s == "for") return KW_FOR;
 	if (s == "if") return KW_IF;
-	if (s == "namespace") return KW_NAMESPACE;
 	if (s == "new") return KW_NEW;
 	if (s == "null") return KW_NULL;
+	if (s == "old") return KW_OLD;
+	if (s == "opaque") return KW_OPAQUE;
 	if (s == "return") return KW_RETURN;
 	if (s == "sizeof") return KW_SIZEOF;
 	if (s == "SOA") return KW_SOA;
 	if (s == "struct") return KW_STRUCT;
 	if (s == "switch") return KW_SWITCH;
-	// if (s == "this") return KW_THIS;
 	if (s == "true") return KW_TRUE;
 	if (s == "while") return KW_WHILE;
 	
